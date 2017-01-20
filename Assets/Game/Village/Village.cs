@@ -1,15 +1,17 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿namespace Sovereign
+{
+	public class Village
+	{
+		private string name;
+		private Player player;
 
-public class Village : MonoBehaviour {
+		public string Name { get { return name; } private set { name = value; } }
+		public Player OwnerPlayer { get { return player; } private set { player = value; } }
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
+		public Village(Player player, string name)
+		{
+			OwnerPlayer = player;
+			Name = name;
+		}
 	}
 }
