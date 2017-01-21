@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Sovereign;
 
 namespace Sovereign.Test
 {
@@ -10,6 +11,8 @@ namespace Sovereign.Test
 		private InputField commandInputField;
 		[SerializeField]
 		private Button enterCommandButton;
+		[SerializeField]
+		private Text villageDebugText;
 
 		private GameManager game;
 		private Player player;
@@ -18,6 +21,7 @@ namespace Sovereign.Test
 		{
 			enterCommandButton.onClick.AddListener(OnEnterCommandButtonClicked);
 
+			Commands.Initialize(this);
 			game = new GameManager(this);
 			player = new Player {
 				Id = "0",
@@ -36,6 +40,16 @@ namespace Sovereign.Test
 			{
 				OnEnterCommandButtonClicked();
 			}
+
+			string output = game.GetDebugString() + "\n\n";
+
+			Village village = game.Villages.GetVillage(player);
+			if (village != null)
+			{
+				output += "Village: " + village.Name + ", " + village.OwnerPlayer.Title + ": " + village.OwnerPlayer.Name;
+			}
+
+			villageDebugText.text = output;
 		}
 
 		private void OnEnterCommandButtonClicked()
