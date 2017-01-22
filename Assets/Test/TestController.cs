@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Sovereign;
@@ -47,6 +48,14 @@ namespace Sovereign.Test
 			if (village != null)
 			{
 				output += "Village: " + village.Name + ", " + village.OwnerPlayer.Title + ": " + village.OwnerPlayer.Name;
+				output += "\nPopulation:";
+				int maleCount = village.Population.Count(p => p.Sex == "Male");
+				int femaleCount = village.Population.Count(p => p.Sex == "Female");
+				output += "(Male: " + maleCount + ", Female: " + femaleCount + ")";
+				foreach (Person person in village.Population)
+				{
+					output += "\n  " + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class;
+				}
 			}
 
 			villageDebugText.text = output;

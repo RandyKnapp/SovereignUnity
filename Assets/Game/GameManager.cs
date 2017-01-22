@@ -21,6 +21,7 @@ namespace Sovereign
 
 			Commands.Add("-new-game", OnCommandNewGame, 0, "-new-game", new[] { "-newgame", "-ng" });
 			Commands.Add("-join-game", OnCommandJoinGame, 2, "-new-game <playerTitle> <villageName>", new[] { "-joingame", "-join", "-jg"});
+			Commands.Add("-end-turn", OnCommandEndTurn, 0, "-end-turn", new[] { "-end", "-et" });
 
 			gameFlowHandlers.Add(villageManager);
 		}
@@ -28,6 +29,15 @@ namespace Sovereign
 		public void HandleCommand(Player player, string command, List<string> args)
 		{
 			Commands.Call(player, command, args);
+		}
+
+		public string GetDebugString()
+		{
+			string message = "Sovereign - ";
+			message += inGame ? "Game Started" : "No game";
+			message += " - Players: " + players.Count;
+			message += "\nTurn: " + (turnCounter + 1);
+			return message;
 		}
 
 		public void NewGame()
@@ -39,6 +49,8 @@ namespace Sovereign
 			{
 				gameFlowHandler.NewGame();
 			}
+
+			BeginTurn(turnCounter);
 		}
 
 		public void BeginTurn(int turnIndex)
@@ -84,13 +96,13 @@ namespace Sovereign
 			}
 		}
 
-		public string GetDebugString()
+		private void OnCommandEndTurn(Player player, string command, List<string> args)
 		{
-			string message = "Sovereign - ";
-			message += inGame ? "Game Started" : "No game";
-			message += " - Players: " + players.Count;
-			return message;
+			EndTurn(turnCounter);
+			turnCounter++;
+			BeginTurn(turnCounter);
 		}
+
 	}
 }
 
