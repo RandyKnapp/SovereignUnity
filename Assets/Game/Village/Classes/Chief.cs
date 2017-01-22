@@ -4,9 +4,9 @@
 	{
 		public override string Name { get { return "Chief"; } }
 		
-		public override void Produce()
+		public override ResourcePack Produce()
 		{
-
+			return new ResourcePack();
 		}
 	}
 }

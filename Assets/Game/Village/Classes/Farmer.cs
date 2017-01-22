@@ -4,9 +4,9 @@
 	{
 		public override string Name { get { return "Farmer"; } }
 		
-		public override void Produce()
+		public override ResourcePack Produce()
 		{
-
+			return new ResourcePack(new Food(2));
 		}
 	}
 }

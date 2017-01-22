@@ -3,6 +3,6 @@
 	public abstract class PersonClass : IProducer
 	{
 		public abstract string Name { get; }
-		public abstract void Produce();
+		public abstract ResourcePack Produce();
 	}
 }

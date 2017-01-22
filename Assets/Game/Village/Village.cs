@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Sovereign
 {
-	public class Village : IProducer, IGameFlowHandler
+	public class Village : IGameFlowHandler
 	{
 		private const int StartingPopulation = 10;
 		private static readonly Food StartingFood = new Food(15);
@@ -46,11 +46,6 @@ namespace Sovereign
 		{
 		}
 
-		public void Produce()
-		{
-
-		}
-
 		public void NewGame() { }
 		public void EndGame() { }
 
@@ -60,8 +55,17 @@ namespace Sovereign
 
 		public void EndTurn(int turnIndex)
 		{
+			GatherProduction();
 			FeedPeople();
 			BuryDead();
+		}
+
+		private void GatherProduction()
+		{
+			foreach (Person person in population)
+			{
+				resources.Add(person.Produce());
+			}
 		}
 
 		private void FeedPeople()

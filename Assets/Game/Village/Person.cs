@@ -87,9 +87,9 @@ namespace Sovereign
 			OnDeath(this);
 		}
 
-		public void Produce()
+		public ResourcePack Produce()
 		{
-
+			return Class.Produce();
 		}
 
 		public Food GetFoodRequired()

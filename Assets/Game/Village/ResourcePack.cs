@@ -9,6 +9,14 @@ namespace Sovereign
 
 		public List<Resource> Resources { get { return resources.Values.ToList(); } }
 
+		public ResourcePack(params Resource[] args)
+		{
+			foreach (Resource resource in args)
+			{
+				Add(resource);
+			}
+		}
+
 		public void Add(Resource resource)
 		{
 			Resource currentResource = GetResource(resource);
@@ -19,6 +27,14 @@ namespace Sovereign
 			else
 			{
 				currentResource.Add(resource);
+			}
+		}
+
+		public void Add(ResourcePack resourcePack)
+		{
+			foreach (Resource resource in resourcePack.Resources)
+			{
+				Add(resource);
 			}
 		}
 
@@ -35,12 +51,33 @@ namespace Sovereign
 			}
 		}
 
+		public bool CanRemove(ResourcePack resourcePack)
+		{
+			foreach (Resource resource in resourcePack.Resources)
+			{
+				if (!CanRemove(resource))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
 		public void Remove(Resource resource)
 		{
 			if (CanRemove(resource))
 			{
 				Resource currentResource = GetResource(resource);
 				currentResource.Remove(resource);
+			}
+		}
+
+		public void Remove(ResourcePack resourcePack)
+		{
+			foreach (Resource resource in resourcePack.Resources)
+			{
+				Remove(resource);
 			}
 		}
 

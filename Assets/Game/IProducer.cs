@@ -2,6 +2,6 @@
 {
 	public interface IProducer
 	{
-		void Produce();
+		ResourcePack Produce();
 	}
 }
