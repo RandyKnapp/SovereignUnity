@@ -56,10 +56,18 @@ namespace Sovereign
 
 		public void BeginTurn(int turnIndex)
 		{
+			foreach (Village village in villages.Values)
+			{
+				village.BeginTurn(turnIndex);
+			}
 		}
 
 		public void EndTurn(int turnIndex)
 		{
+			foreach (Village village in villages.Values)
+			{
+				village.EndTurn(turnIndex);
+			}
 		}
 
 		public void EndGame()

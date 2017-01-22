@@ -51,11 +51,20 @@ namespace Sovereign.Test
 				output += "\nPopulation:";
 				int maleCount = village.Population.Count(p => p.Sex == "Male");
 				int femaleCount = village.Population.Count(p => p.Sex == "Female");
-				output += "(Male: " + maleCount + ", Female: " + femaleCount + ")";
+				output += " (Male: " + maleCount + ", Female: " + femaleCount + ")";
 				foreach (Person person in village.Population)
 				{
 					output += "\n  [" + person.Id + "] " + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class;
+					if (person.Starving)
+					{
+						output += " (Starving)";
+					}
 				}
+				if (village.Graveyard.Count > 0)
+				{
+					output += "\n  [Dead: " + village.Graveyard.Count + "]";
+				}
+				output += "\nFood: " + village.Food;
 			}
 
 			villageDebugText.text = output;

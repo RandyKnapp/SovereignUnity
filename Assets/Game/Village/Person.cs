@@ -4,15 +4,6 @@ namespace Sovereign
 {
 	public class Person : IProducer
 	{
-		public uint Id { get; private set; }
-		public bool IsChief { get; set; }
-		public string Title { get; set; }
-		public int Age { get; set; }
-		public string Name { get; set; }
-		public string Sex { get; set; }
-		public string Class { get; set; }
-
-		private static readonly Random rand = new Random();
 		private static readonly string[] ChiefTitles = {
 			"Chief", "Jarl", "Arl", "Earl"
 		};
@@ -41,6 +32,22 @@ namespace Sovereign
 			"Sassa", "Sigfrid", "Signy", "Sigrun", "Siri", "Siv", "Solveig", "Sylvi",
 			"Thora", "Thyra", "Tone", "Tordis", "Torhild", "Tove", "Turid", "Tyra", "Ylva"
 		};
+		private const int StarvationThreshold = 3;
+		private static readonly Random rand = new Random();
+
+		private int starvingCounter;
+
+		public uint Id { get; private set; }
+		public bool IsChief { get; set; }
+		public string Title { get; set; }
+		public int Age { get; set; }
+		public string Name { get; set; }
+		public string Sex { get; set; }
+		public string Class { get; set; }
+		public bool Starving { get { return starvingCounter > 0; } }
+		public bool Dead { get; private set; }
+
+		public event Action<Person> OnDeath = delegate {};
 
 		public Person(uint id)
 		{
@@ -74,9 +81,24 @@ namespace Sovereign
 			return sex == "Male" ? MaleNames[rand.Next(MaleNames.Length)] : FemaleNames[rand.Next(FemaleNames.Length)];
 		}
 
+		public void Die()
+		{
+			Dead = true;
+			OnDeath(this);
+		}
+
 		public void Produce()
 		{
 
+		}
+
+		public void GoHungry()
+		{
+			starvingCounter++;
+			if (starvingCounter >= StarvationThreshold)
+			{
+				Die();
+			}
 		}
 	}
 }
