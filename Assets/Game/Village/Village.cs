@@ -21,7 +21,7 @@ namespace Sovereign
 		public List<Person> Graveyard { get { return graveyard; } }
 		public int Food { get { return food; } }
 
-		public Village(Player player)
+		public Village(Player player, string name)
 		{
 			OwnerPlayer = player;
 			Name = name;

@@ -26,14 +26,14 @@ namespace Sovereign
 		{
 			if (GetVillage(player) == null)
 			{
-				Village village = new Village(player);
+				Village village = new Village(player, GetRandomUniqueName());
 				villages.Add(player.Id, village);
 			}
 		}
 
 		private string GetRandomUniqueName()
 		{
-			var uniqueNames = VillageNames.Where(name => !VillageUsesName(name)) as List<string>;
+			var uniqueNames = VillageNames.Where(name => !VillageUsesName(name)).ToList();
 			return uniqueNames[rand.Next(0, uniqueNames.Count)];
 		}
 
