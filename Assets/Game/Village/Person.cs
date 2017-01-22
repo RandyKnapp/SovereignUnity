@@ -4,13 +4,19 @@ namespace Sovereign
 {
 	public class Person : IProducer
 	{
+		public uint Id { get; private set; }
+		public bool IsChief { get; set; }
+		public string Title { get; set; }
 		public int Age { get; set; }
 		public string Name { get; set; }
 		public string Sex { get; set; }
 		public string Class { get; set; }
 
-		private static Random rand = new Random();
-		private static readonly string[] maleNames = {
+		private static readonly Random rand = new Random();
+		private static readonly string[] ChiefTitles = {
+			"Chief", "Jarl", "Arl", "Earl"
+		};
+		private static readonly string[] MaleNames = {
 			"Ake", "Arvid", "Asger", "Asmund", "Audun",
 			"Balder", "Bard", "Birger", "Bjarke", "Bjarte", "Bjorn", "Brandt", "Brynjar",
 			"Calder", "Canute", "Carr", "Colborn", "Colden", "Cyler", "Dagfinn", "Destin",
@@ -24,7 +30,7 @@ namespace Sovereign
 			"Tait", "Tarben", "Thor", "Thorvaldr", "Torbjorn", "Torvald", "Troels", "Trygve", "Tyr",
 			"Uffe", "Ulf", "Unn", "Vali", "Vern", "Vidar"
 		};
-		private static readonly string[] femaleNames = {
+		private static readonly string[] FemaleNames = {
 			"Alfhild", "Alvilda", "Ase", "Aslaug", "Asta", "Astrid",
 			"Bergljot", "Bodil", "Borghild", "Brenna",
 			"Dagmar", "Dagny", "Eerika", "Eira", "Embla", "Eydis", "Freya",
@@ -36,9 +42,25 @@ namespace Sovereign
 			"Thora", "Thyra", "Tone", "Tordis", "Torhild", "Tove", "Turid", "Tyra", "Ylva"
 		};
 
-		public static Person GenerateStartingPerson()
+		public Person(uint id)
 		{
-			Person person = new Person();
+			Id = id;
+		}
+
+		public static Person GenerateStartingChief(uint id)
+		{
+			Person person = GenerateStartingPerson(id);
+			person.Age = rand.Next(20, 40);
+			person.Class = "Chief";
+			person.IsChief = true;
+			person.Title = ChiefTitles[rand.Next(0, ChiefTitles.Length)];
+
+			return person;
+		}
+
+		public static Person GenerateStartingPerson(uint id)
+		{
+			Person person = new Person(id);
 			person.Age = rand.Next(14, 31);
 			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
 			person.Name = GetRandomName(person.Sex);
@@ -49,7 +71,7 @@ namespace Sovereign
 
 		private static string GetRandomName(string sex)
 		{
-			return sex == "Male" ? maleNames[rand.Next(maleNames.Length)] : femaleNames[rand.Next(femaleNames.Length)];
+			return sex == "Male" ? MaleNames[rand.Next(MaleNames.Length)] : FemaleNames[rand.Next(FemaleNames.Length)];
 		}
 
 		public void Produce()

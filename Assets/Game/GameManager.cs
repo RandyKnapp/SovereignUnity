@@ -19,8 +19,9 @@ namespace Sovereign
 		{
 			this.messenger = messenger;
 
+			Commands.Add("-d", OnCommandDebugStart, 0, "-d", new[] { "-debug-start" });
 			Commands.Add("-new-game", OnCommandNewGame, 0, "-new-game", new[] { "-newgame", "-ng" });
-			Commands.Add("-join-game", OnCommandJoinGame, 2, "-new-game <playerTitle> <villageName>", new[] { "-joingame", "-join", "-jg"});
+			Commands.Add("-join-game", OnCommandJoinGame, 0, "-join-game", new[] { "-joingame", "-join", "-jg"});
 			Commands.Add("-end-turn", OnCommandEndTurn, 0, "-end-turn", new[] { "-end", "-et" });
 
 			gameFlowHandlers.Add(villageManager);
@@ -77,6 +78,12 @@ namespace Sovereign
 			}
 		}
 
+		private void OnCommandDebugStart(Player player, string command, List<string> args)
+		{
+			OnCommandNewGame(player, "-ng", null);
+			OnCommandJoinGame(player, "-jg", null);
+		}
+
 		private void OnCommandNewGame(Player player, string command, List<string> args)
 		{
 			NewGame();
@@ -84,15 +91,11 @@ namespace Sovereign
 
 		private void OnCommandJoinGame(Player player, string command, List<string> args)
 		{
-			string playerTitle = args[0];
-			string villageName = args[1];
-
 			if (!players.Contains(player))
 			{
-				player.Title = playerTitle;
 				players.Add(player);
 
-				villageManager.CreateNewVillage(player, villageName);
+				villageManager.CreateNewVillage(player);
 			}
 		}
 

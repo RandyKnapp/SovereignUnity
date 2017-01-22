@@ -47,14 +47,14 @@ namespace Sovereign.Test
 			Village village = game.Villages.GetVillage(player);
 			if (village != null)
 			{
-				output += "Village: " + village.Name + ", " + village.OwnerPlayer.Title + ": " + village.OwnerPlayer.Name;
+				output += "Village: " + village.Name + " (Owner: " + village.OwnerPlayer.Name + ")";
 				output += "\nPopulation:";
 				int maleCount = village.Population.Count(p => p.Sex == "Male");
 				int femaleCount = village.Population.Count(p => p.Sex == "Female");
 				output += "(Male: " + maleCount + ", Female: " + femaleCount + ")";
 				foreach (Person person in village.Population)
 				{
-					output += "\n  " + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class;
+					output += "\n  [" + person.Id + "] " + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class;
 				}
 			}
 
