@@ -6,26 +6,26 @@ namespace Sovereign
 	public class Village : IProducer, IGameFlowHandler
 	{
 		private const int StartingPopulation = 10;
-		private const int StartingFood = 15;
+		private static readonly Food StartingFood = new Food(15);
 
 		private string name;
 		private Player player;
 		private List<Person> population = new List<Person>();
 		private List<Person> graveyard = new List<Person>();
 		private uint personUniqueId = 0;
-		private int food;
+		private ResourcePack resources = new ResourcePack();
 
 		public string Name { get { return name; } private set { name = value; } }
 		public Player OwnerPlayer { get { return player; } private set { player = value; } }
 		public List<Person> Population { get { return population; } }
 		public List<Person> Graveyard { get { return graveyard; } }
-		public int Food { get { return food; } }
+		public List<Resource> Resources { get { return resources.Resources; } }
 
 		public Village(Player player, string name)
 		{
 			OwnerPlayer = player;
 			Name = name;
-			food = StartingFood;
+			resources.Add(StartingFood);
 			population.Clear();
 
 			AddPerson(Person.GenerateStartingChief(personUniqueId++));
@@ -74,9 +74,10 @@ namespace Sovereign
 
 		private void FeedPerson(Person person)
 		{
-			if (food > 0)
+			Food requiredFood = person.GetFoodRequired();
+			if (resources.CanRemove(requiredFood))
 			{
-				food--;
+				resources.Remove(requiredFood);
 			}
 			else
 			{

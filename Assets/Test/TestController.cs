@@ -54,7 +54,7 @@ namespace Sovereign.Test
 				output += " (Male: " + maleCount + ", Female: " + femaleCount + ")";
 				foreach (Person person in village.Population)
 				{
-					output += "\n  [" + person.Id + "] " + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class;
+					output += "\n  [" + person.Id + "] " + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class.Name;
 					if (person.Starving)
 					{
 						output += " (Starving)";
@@ -64,7 +64,11 @@ namespace Sovereign.Test
 				{
 					output += "\n  [Dead: " + village.Graveyard.Count + "]";
 				}
-				output += "\nFood: " + village.Food;
+				output += "\nResources: ";
+				foreach (Resource resource in village.Resources)
+				{
+					output += "\n  " + resource.Name + ": " + resource.Count;
+				}
 			}
 
 			villageDebugText.text = output;

@@ -43,7 +43,7 @@ namespace Sovereign
 		public int Age { get; set; }
 		public string Name { get; set; }
 		public string Sex { get; set; }
-		public string Class { get; set; }
+		public PersonClass Class { get; set; }
 		public bool Starving { get { return starvingCounter > 0; } }
 		public bool Dead { get; private set; }
 
@@ -58,7 +58,7 @@ namespace Sovereign
 		{
 			Person person = GenerateStartingPerson(id);
 			person.Age = rand.Next(20, 40);
-			person.Class = "Chief";
+			person.Class = new Chief();
 			person.IsChief = true;
 			person.Title = ChiefTitles[rand.Next(0, ChiefTitles.Length)];
 
@@ -71,7 +71,7 @@ namespace Sovereign
 			person.Age = rand.Next(14, 31);
 			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
 			person.Name = GetRandomName(person.Sex);
-			person.Class = "Villager";
+			person.Class = new Farmer();
 
 			return person;
 		}
@@ -90,6 +90,11 @@ namespace Sovereign
 		public void Produce()
 		{
 
+		}
+
+		public Food GetFoodRequired()
+		{
+			return new Food(1);
 		}
 
 		public void GoHungry()
