@@ -33,6 +33,7 @@ namespace Sovereign
 			"Thora", "Thyra", "Tone", "Tordis", "Torhild", "Tove", "Turid", "Tyra", "Ylva"
 		};
 		private const int StarvationThreshold = 3;
+		private const int ComingOfAgeThreshold = 13;
 		private static readonly Random rand = new Random();
 
 		private int starvingCounter;
@@ -41,6 +42,7 @@ namespace Sovereign
 		public bool IsChief { get; set; }
 		public string Title { get; set; }
 		public int Age { get; set; }
+		public bool IsChild { get { return Age < ComingOfAgeThreshold; } }
 		public string Name { get; set; }
 		public string Sex { get; set; }
 		public PersonClass Class { get; set; }
@@ -57,6 +59,7 @@ namespace Sovereign
 		public static Person GenerateStartingChief(uint id)
 		{
 			Person person = GenerateStartingPerson(id);
+			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
 			person.Age = rand.Next(20, 40);
 			person.Class = new Chief();
 			person.IsChief = true;
@@ -65,11 +68,19 @@ namespace Sovereign
 			return person;
 		}
 
+		public static Person GenerateStartingChild(uint id)
+		{
+			Person person = GenerateStartingPerson(id);
+			person.Age = rand.Next(0, ComingOfAgeThreshold);
+			person.Class = new Child();
+			return person;
+		}
+
 		public static Person GenerateStartingPerson(uint id)
 		{
 			Person person = new Person(id);
 			person.Age = rand.Next(14, 31);
-			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
+			person.Sex = id % 2 == 0 ? "Male" : "Female";
 			person.Name = GetRandomName(person.Sex);
 			person.Class = new Farmer();
 

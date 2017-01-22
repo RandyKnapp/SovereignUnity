@@ -5,7 +5,8 @@ namespace Sovereign
 {
 	public class Village : IGameFlowHandler
 	{
-		private const int StartingPopulation = 10;
+		private const int StartingPopulation = 6;
+		private const int StartingChildren = 4;
 		private static readonly Food StartingFood = new Food(15);
 
 		private string name;
@@ -29,9 +30,14 @@ namespace Sovereign
 			population.Clear();
 
 			AddPerson(Person.GenerateStartingChief(personUniqueId++));
-			for (int i = 0; i < StartingPopulation - 1; ++i)
+			for (int i = 0; i < StartingPopulation; ++i)
 			{
 				Person person = Person.GenerateStartingPerson(personUniqueId++);
+				AddPerson(person);
+			}
+			for (int i = 0; i < StartingChildren; ++i)
+			{
+				Person person = Person.GenerateStartingChild(personUniqueId++);
 				AddPerson(person);
 			}
 		}
