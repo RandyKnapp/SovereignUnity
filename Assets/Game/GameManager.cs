@@ -5,18 +5,22 @@ namespace Sovereign
 {
 	public class GameManager : IGameFlowHandler
 	{
-		private readonly List<IGameFlowHandler> gameFlowHandlers = new List<IGameFlowHandler>();
+		private static GameManager instance;
 
+		private readonly List<IGameFlowHandler> gameFlowHandlers = new List<IGameFlowHandler>();
 		private readonly IPlayerMessenger messenger;
 		private readonly VillageManager villageManager = new VillageManager();
 		private readonly List<Player> players = new List<Player>();
 		private bool inGame;
 		private int turnCounter;
 
+		public static GameManager Instance { get { return instance; } }
 		public VillageManager Villages { get { return villageManager; } }
+		public List<Player> Players { get { return players; } }
 
 		public GameManager(IPlayerMessenger messenger)
 		{
+			instance = this;
 			this.messenger = messenger;
 
 			Commands.Add("-d", OnCommandDebugStart, 0, "-d", new[] { "-debug-start" });

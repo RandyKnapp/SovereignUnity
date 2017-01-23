@@ -54,14 +54,44 @@ namespace Sovereign.Test
 				int maleChildCount = village.Population.Count(p => p.Sex == "Male" && p.IsChild);
 				int femaleChildCount = village.Population.Count(p => p.Sex == "Female" && p.IsChild);
 				output += " (Adults - M: " + maleCount + ", F: " + femaleCount + " / Children - M: " + maleChildCount + ", F: " + femaleChildCount + ")";
-				foreach (Person person in village.Population)
+				/*foreach (Person person in village.Population)
 				{
 					output += "\n  [" + person.Uid + "] " + (person.Title != null ? person.Title + " " : "") + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class.Name;
 					if (person.Starving)
 					{
 						output += " (Starving)";
 					}
+				}*/
+				foreach (Family family in village.Families)
+				{
+					Person head = family.HeadOfFamily;
+					output += "\n  [" + family.Uid + "] " + family.Name + " family:";
+					output += "\n    " + DebugString(head);
+					if (family.HasSpouse(head))
+					{
+						output += "\n    + " + DebugString(family.GetSpouse(head));
+					}
+
+					if (family.HasChildren(head))
+					{
+						output += "\n    - Children:";
+						foreach (Person child in family.GetChildren(head))
+						{
+							output += "\n      - " + DebugString(child);
+						}
+					}
+
+					if (family.OwnsSlaves(head))
+					{
+						output += "\n    - Slaves:";
+						foreach (Person slave in family.GetSlaves(head))
+						{
+							output += "\n      - " + DebugString(slave);
+						}
+					}
+					
 				}
+
 				if (village.Graveyard.Count > 0)
 				{
 					output += "\n  [Dead: " + village.Graveyard.Count + "]";
@@ -74,6 +104,11 @@ namespace Sovereign.Test
 			}
 
 			villageDebugText.text = output;
+		}
+
+		private string DebugString(Person person)
+		{
+			return "[" + person.Uid + "] " + (person.Title != null ? person.Title + " " : "") + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class.Name;
 		}
 
 		private void OnEnterCommandButtonClicked()

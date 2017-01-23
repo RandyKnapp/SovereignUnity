@@ -38,10 +38,13 @@ namespace Sovereign
 
 		private int starvingCounter;
 
+		public Village Village { get; private set; }
+		public Family Family { get; set; }
 		public bool IsChief { get; set; }
 		public string Title { get; set; }
 		public int Age { get; set; }
 		public bool IsChild { get { return Age < ComingOfAgeThreshold; } }
+		public bool IsSlave { get { return Class is Slave; } }
 		public string Name { get; set; }
 		public string Sex { get; set; }
 		public PersonClass Class { get; set; }
@@ -54,9 +57,9 @@ namespace Sovereign
 		{
 		}
 
-		public static Person GenerateStartingChief()
+		public static Person GenerateStartingChief(Village village)
 		{
-			Person person = GenerateStartingPerson();
+			Person person = GenerateStartingPerson(village);
 			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
 			person.Age = rand.Next(20, 40);
 			person.Class = new Chief();
@@ -66,17 +69,18 @@ namespace Sovereign
 			return person;
 		}
 
-		public static Person GenerateStartingChild()
+		public static Person GenerateStartingChild(Village village)
 		{
-			Person person = GenerateStartingPerson();
+			Person person = GenerateStartingPerson(village);
 			person.Age = rand.Next(0, ComingOfAgeThreshold);
 			person.Class = new Child();
 			return person;
 		}
 
-		public static Person GenerateStartingPerson()
+		public static Person GenerateStartingPerson(Village village)
 		{
 			Person person = new Person();
+			person.Village = village;
 			person.Age = rand.Next(14, 31);
 			person.Sex = person.Uid % 2 == 0 ? "Male" : "Female";
 			person.Name = GetRandomName(person.Sex);
