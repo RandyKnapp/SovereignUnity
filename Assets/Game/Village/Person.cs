@@ -55,6 +55,7 @@ namespace Sovereign
 
 		public Person()
 		{
+			Family = new Family(this);
 		}
 
 		public static Person GenerateStartingChief(Village village)
@@ -82,7 +83,7 @@ namespace Sovereign
 			Person person = new Person();
 			person.Village = village;
 			person.Age = rand.Next(14, 31);
-			person.Sex = person.Uid % 2 == 0 ? "Male" : "Female";
+			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
 			person.Name = GetRandomName(person.Sex);
 			person.Class = new Farmer();
 

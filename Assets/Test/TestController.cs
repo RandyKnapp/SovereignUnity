@@ -54,15 +54,15 @@ namespace Sovereign.Test
 				int maleChildCount = village.Population.Count(p => p.Sex == "Male" && p.IsChild);
 				int femaleChildCount = village.Population.Count(p => p.Sex == "Female" && p.IsChild);
 				output += " (Adults - M: " + maleCount + ", F: " + femaleCount + " / Children - M: " + maleChildCount + ", F: " + femaleChildCount + ")";
-				/*foreach (Person person in village.Population)
+				foreach (Person person in village.Population)
 				{
 					output += "\n  [" + person.Uid + "] " + (person.Title != null ? person.Title + " " : "") + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class.Name;
 					if (person.Starving)
 					{
 						output += " (Starving)";
 					}
-				}*/
-				foreach (Family family in village.Families)
+				}
+				/*foreach (Family family in village.Families)
 				{
 					Person head = family.HeadOfFamily;
 					output += "\n  [" + family.Uid + "] " + family.Name + " family:";
@@ -90,7 +90,7 @@ namespace Sovereign.Test
 						}
 					}
 					
-				}
+				}*/
 
 				if (village.Graveyard.Count > 0)
 				{

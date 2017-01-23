@@ -3,200 +3,178 @@ using System.Collections.Generic;
 
 namespace Sovereign
 {
-	public enum FamilyConnectionType
-	{
-		Spouse,
-		Parent,
-		Child,
-		Sibling,
-		Slave,
-		Owner
-	}
-
-	class FamilyConnection
-	{
-		public Person from;
-		public Person to;
-		public FamilyConnectionType type;
-	}
-
 	// TODO: Allow polygamy?????
-	public sealed class Family : GameObject
+	public sealed class Family
 	{
-		private readonly List<Person> members = new List<Person>();
-		private readonly List<FamilyConnection> connections = new List<FamilyConnection>();
+		private readonly uint rootPerson;
+		private uint spouse;
+		private uint owner;
+		private readonly List<uint> parents = new List<uint>();
+		private readonly List<uint> siblings = new List<uint>();
+		private readonly List<uint> children = new List<uint>();
+		private readonly List<uint> slaves = new List<uint>();
 
-		public string Name { get; private set; }
-		public Person HeadOfFamily { get; private set; }
+		public Person RootPerson { get { return GameObject.GetGameObject<Person>(rootPerson); } }
+		public Person Spouse { get { return GameObject.GetGameObject<Person>(spouse); } }
+		public Person Owner { get { return GameObject.GetGameObject<Person>(owner); } }
+		public List<Person> Parents { get { return ListAsListOfPeople(parents); } }
+		public List<Person> Siblings { get { return ListAsListOfPeople(parents); } }
+		public List<Person> Children { get { return ListAsListOfPeople(parents); } }
+		public List<Person> Slaves { get { return ListAsListOfPeople(parents); } }
 
-		private void AddPersonAsMember(Person person)
+		public Family(Person root)
 		{
-			if (!members.Contains(person))
+			rootPerson = root.Uid;
+		}
+
+		private void AddPersonToList(List<uint> list, Person person)
+		{
+			if (!list.Contains(person.Uid))
 			{
-				members.Add(person);
-				person.Family = this;
+				list.Add(person.Uid);
 			}
 		}
 
-		private void AddConnection(Person from, Person to, FamilyConnectionType type)
+		public void AddSpouse(Person spouse)
 		{
-			FamilyConnection connection = new FamilyConnection();
-			connection.from = from;
-			connection.to = to;
-			connection.type = type;
-			connections.Add(connection);
-		}
-
-		private void AddTwoWayConnection(Person a, Person b, FamilyConnectionType type)
-		{
-			AddConnection(a, b, type);
-			AddConnection(b, a, type);
-		}
-
-		public void AddHeadOfFamily(Person person)
-		{
-			HeadOfFamily = person;
-			AddPersonAsMember(person);
-			Name = person.Name;
-		}
-
-		public void AddSpouse(Person member, Person spouse)
-		{
-			AddPersonAsMember(spouse);
-			AddTwoWayConnection(member, spouse, FamilyConnectionType.Spouse);
-		}
-
-		public void AddChild(Person parentA, Person parentB, Person child)
-		{
-			List<Person> otherChildren = GetChildren(parentA);
-
-			AddPersonAsMember(child);
-			AddConnection(parentA, child, FamilyConnectionType.Child);
-			AddConnection(parentB, child, FamilyConnectionType.Child);
-			AddConnection(child, parentA, FamilyConnectionType.Parent);
-			AddConnection(child, parentB, FamilyConnectionType.Parent);
-
-			foreach (Person sibling in otherChildren)
+			if (!HasSpouse())
 			{
-				AddTwoWayConnection(child, sibling, FamilyConnectionType.Sibling);
+				this.spouse = spouse.Uid;
 			}
 		}
 
-		public void AddSibling(Person person, Person sibling)
+		public void AddParent(Person parent)
 		{
-			AddPersonAsMember(sibling);
-			AddTwoWayConnection(person, sibling, FamilyConnectionType.Sibling);
+			AddPersonToList(parents, parent);
 		}
 
-		public void AddSlave(Person owner, Person slave)
+		public void AddChild(Person child)
 		{
-			// TODO: Remove slave from previous owner
-			AddPersonAsMember(slave);
-			AddConnection(owner, slave, FamilyConnectionType.Owner);
-			AddConnection(slave, owner, FamilyConnectionType.Slave);
+			AddPersonToList(children, child);
 		}
 
-		private List<FamilyConnection> GetAllRelationships(Person person)
+		public void AddSibling(Person sibling)
 		{
-			return connections.Where(c => c.from == person).ToList();
+			AddPersonToList(siblings, sibling);
 		}
 
-		private List<Person> GetAllRelationshipsOfType(Person p, FamilyConnectionType type)
+		public void AddSlave(Person slave)
 		{
-			List<FamilyConnection> allRelationships = GetAllRelationships(p);
-			return allRelationships.Where(r => r.type == type && !r.to.Dead).Select(r => r.to).ToList();
+			AddPersonToList(slaves, slave);
 		}
 
-		public List<Person> GetChildren(Person parent)
+		public void RemoveSlave(Person slave)
 		{
-			return GetAllRelationshipsOfType(parent, FamilyConnectionType.Child);
+			slaves.Remove(slave.Uid);
 		}
 
-		public List<Person> GetParents(Person child)
+		public void AddOwner(Person owner)
 		{
-			return GetAllRelationshipsOfType(child, FamilyConnectionType.Parent);
+			this.owner = owner.Uid;
 		}
 
-		public List<Person> GetSiblings(Person person)
+		public void RemoveOwner()
 		{
-			return GetAllRelationshipsOfType(person, FamilyConnectionType.Sibling);
+			owner = 0;
 		}
 
-		public Person GetSpouse(Person person)
+		private List<Person> ListAsListOfPeople(List<uint> list)
 		{
-			var spouses = GetAllRelationshipsOfType(person, FamilyConnectionType.Spouse);
-			return (spouses != null && spouses.Count == 1) ? spouses[0] : null;
+			return list.Select(uid => GameObject.GetGameObject<Person>(uid)).ToList();
+		}
+		
+		public bool IsParentOf(Person child)
+		{
+			return children.Contains(child.Uid);
 		}
 
-		public Person GetOwner(Person slave)
+		public bool IsChildOf(Person parent)
 		{
-			var owners = GetAllRelationshipsOfType(slave, FamilyConnectionType.Owner);
-			return (owners != null && owners.Count == 1) ? owners[0] : null;
+			return parents.Contains(parent.Uid);
 		}
 
-		public List<Person> GetSlaves(Person owner)
+		public bool IsSibling(Person sibling)
 		{
-			return GetAllRelationshipsOfType(owner, FamilyConnectionType.Owner);
+			return siblings.Contains(sibling.Uid);
 		}
 
-		public bool IsParentOf(Person parent, Person child)
+		public bool IsSpouse(Person spouse)
 		{
-			return GetChildren(parent).Contains(child);
+			return this.spouse == spouse.Uid;
 		}
 
-		public bool IsChildOf(Person child, Person parent)
+		public bool HasSpouse()
 		{
-			return GetParents(child).Contains(parent);
+			return spouse != 0;
 		}
 
-		public bool AreSiblings(Person personA, Person personB)
+		public bool IsOwnerOf(Person slave)
 		{
-			return GetSiblings(personA).Contains(personB);
+			return slaves.Contains(slave.Uid);
 		}
 
-		public bool AreMarried(Person personA, Person personB)
+		public bool IsSlaveOf(Person owner)
 		{
-			return GetSpouse(personA) == personB;
+			return this.owner == owner.Uid;
 		}
 
-		public bool HasSpouse(Person person)
+		public bool IsRelated(Person person)
 		{
-			return GetSpouse(person) != null;
+			return IsSpouse(person) || IsChildOf(person) || IsParentOf(person) || IsSibling(person) || IsOwnerOf(person) || IsSlaveOf(person);
 		}
 
-		public bool IsOwnedBy(Person slave, Person owner)
+		public bool HasChildren()
 		{
-			return GetOwner(slave) == owner;
+			return children.Count > 0;
 		}
 
-		public bool IsSlaveOf(Person owner, Person slave)
+		public int NumberOfChildren()
 		{
-			return GetSlaves(owner).Contains(slave);
+			return children.Count;
 		}
 
-		public bool HasMember(Person person)
+		public bool OwnsSlaves()
 		{
-			return members.Contains(person);
+			return slaves.Count > 0;
 		}
 
-		public bool HasChildren(Person parent)
+		public int NumberOfSlaves()
 		{
-			return NumberOfChildren(parent) > 0;
+			return slaves.Count;
 		}
 
-		public int NumberOfChildren(Person parent)
+		public bool HasOwner()
 		{
-			return GetChildren(parent).Count;
+			return owner != 0;
 		}
 
-		public bool OwnsSlaves(Person owner)
+		public static void AddChildToFamily(Person parent, Person child)
 		{
-			return NumberOfSlaves(owner) > 0;
+			Person parentSpouse = parent.Family.Spouse;
+			List<Person> newSiblings = parent.Family.Children;
+
+			parent.Family.AddChild(child);
+			parentSpouse.Family.AddChild(child);
+			child.Family.AddParent(parent);
+			child.Family.AddParent(parentSpouse);
+			foreach (Person sibling in newSiblings)
+			{
+				sibling.Family.AddSibling(child);
+				child.Family.AddSibling(sibling);
+			}
 		}
 
-		public int NumberOfSlaves(Person owner)
+		public static void AddSlaveToOwner(Person owner, Person slave)
 		{
-			return GetSlaves(owner).Count;
+			if (slave.Family.HasOwner())
+			{
+				Person formerOwner = slave.Family.Owner;
+				formerOwner.Family.RemoveSlave(slave);
+				slave.Family.RemoveOwner();
+			}
+
+			owner.Family.AddSlave(slave);
+			slave.Family.AddOwner(owner);
 		}
 	}
 }

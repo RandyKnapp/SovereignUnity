@@ -18,15 +18,12 @@ namespace Sovereign
 		private readonly List<Person> population = new List<Person>();
 		private readonly List<Person> graveyard = new List<Person>();
 		private readonly ResourcePack resources = new ResourcePack();
-		private readonly FamilyManager familyManager = new FamilyManager();
 
 		public string Name { get { return name; } private set { name = value; } }
 		public Player OwnerPlayer { get { return player; } private set { player = value; } }
 		public List<Person> Population { get { return population; } }
 		public List<Person> Graveyard { get { return graveyard; } }
 		public List<Resource> Resources { get { return resources.Resources; } }
-		public FamilyManager FamilyManager { get { return familyManager; } }
-		public List<Family> Families { get { return familyManager.Families; } }
 
 		public Village(Player player, string name)
 		{
@@ -39,6 +36,7 @@ namespace Sovereign
 			for (int i = 0; i < StartingPopulation; ++i)
 			{
 				Person person = Person.GenerateStartingPerson(this);
+				person.Sex = i % 2 == 0 ? "Male" : "Female";
 				AddPerson(person);
 			}
 
@@ -78,46 +76,36 @@ namespace Sovereign
 				freeAdults.Remove(parentB);
 				headsOfFamily.Remove(parentB);
 
-				Family family = new Family();
-				family.AddHeadOfFamily(parentA);
-				family.AddSpouse(parentA, parentB);
-
-				familyManager.AddFamily(family);
+				parentA.Family.AddSpouse(parentB);
+				parentB.Family.AddSpouse(parentA);
 			}
 
 			for (int i = 0; i < headsOfFamily.Count; ++i)
 			{
 				Person person = freeAdults[i];
 
-				Family family = new Family();
-				family.AddHeadOfFamily(person);
 				if ((i + 1) < freeAdults.Count && rand.NextDouble() < 0.3)
 				{
 					++i;
 					Person sibling = freeAdults[i];
-					family.AddSibling(person, sibling);
+					person.Family.AddSibling(sibling);
+					sibling.Family.AddSibling(person);
 				}
-				familyManager.AddFamily(family);
 			}
 		}
 
 		private void AddChildToRandomFamilyWithTwoParents(Person child)
 		{
-			List<Family> marriedCouples = familyManager.Families.Where(f => f.HasSpouse(f.HeadOfFamily) && f.NumberOfChildren(f.HeadOfFamily) < 4).ToList();
-			Family newFamily = marriedCouples[rand.Next(0, marriedCouples.Count)];
-
-			Person head = newFamily.HeadOfFamily;
-			Person spouse = newFamily.GetSpouse(head);
-			newFamily.AddChild(head, spouse, child);
+			List<Person> marriedAdults = population.Where(p => !p.IsChild && !p.IsSlave && p.Family.HasSpouse() && p.Family.NumberOfChildren() < 4).ToList();
+			Person newParent = marriedAdults[rand.Next(0, marriedAdults.Count)];
+			Family.AddChildToFamily(newParent, child);
 		}
 
 		private void AddSlaveToRandomFamily(Person slave)
 		{
-			List<Family> familiesWithFewSlaves = familyManager.Families.Where(f => f.NumberOfSlaves(f.HeadOfFamily) < 2).ToList();
-			Family newFamily = familiesWithFewSlaves[rand.Next(0, familiesWithFewSlaves.Count)];
-
-			Person head = newFamily.HeadOfFamily;
-			newFamily.AddSlave(head, slave);
+			List<Person> adultsWithFewSlaves = population.Where(p => !p.IsChild && !p.IsSlave && p.Family.NumberOfSlaves() < 2).ToList();
+			Person newOwner = adultsWithFewSlaves[rand.Next(0, adultsWithFewSlaves.Count)];
+			Family.AddSlaveToOwner(newOwner, slave);
 		}
 
 		private Person GetRandomPersonAndRemoveFromList(List<Person> list)

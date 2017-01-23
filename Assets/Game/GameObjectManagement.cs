@@ -20,5 +20,10 @@ namespace Sovereign
 			allObjects.TryGetValue(uid, out result);
 			return result;
 		}
+
+		public static T GetGameObject<T>(uint uid) where T : GameObject
+		{
+			return GetGameObject(uid) as T;
+		}
 	}
 }
