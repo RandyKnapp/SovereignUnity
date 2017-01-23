@@ -47,7 +47,7 @@ namespace Sovereign.Test
 			Village village = game.Villages.GetVillage(player);
 			if (village != null)
 			{
-				output += "Village: " + village.Name + " (Owner: " + village.OwnerPlayer.Name + ")";
+				output += "[" + village.Uid + "] Village: " + village.Name + " (Owner: " + village.OwnerPlayer.Name + ")";
 				output += "\nPopulation: " + village.Population.Count;
 				int maleCount = village.Population.Count(p => p.Sex == "Male" && !p.IsChild);
 				int femaleCount = village.Population.Count(p => p.Sex == "Female" && !p.IsChild);
@@ -56,7 +56,7 @@ namespace Sovereign.Test
 				output += " (Adults - M: " + maleCount + ", F: " + femaleCount + " / Children - M: " + maleChildCount + ", F: " + femaleChildCount + ")";
 				foreach (Person person in village.Population)
 				{
-					output += "\n  [" + person.Id + "] " + (person.Title != null ? person.Title + " " : "") + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class.Name;
+					output += "\n  [" + person.Uid + "] " + (person.Title != null ? person.Title + " " : "") + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class.Name;
 					if (person.Starving)
 					{
 						output += " (Starving)";

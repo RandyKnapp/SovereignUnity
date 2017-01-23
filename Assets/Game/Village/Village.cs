@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Sovereign
 {
-	public class Village : IGameFlowHandler
+	public class Village : GameObject, IGameFlowHandler
 	{
 		private const int StartingPopulation = 6;
 		private const int StartingChildren = 4;
@@ -13,7 +13,6 @@ namespace Sovereign
 		private Player player;
 		private List<Person> population = new List<Person>();
 		private List<Person> graveyard = new List<Person>();
-		private uint personUniqueId = 0;
 		private ResourcePack resources = new ResourcePack();
 
 		public string Name { get { return name; } private set { name = value; } }
@@ -29,15 +28,15 @@ namespace Sovereign
 			resources.Add(StartingFood);
 			population.Clear();
 
-			AddPerson(Person.GenerateStartingChief(personUniqueId++));
+			AddPerson(Person.GenerateStartingChief());
 			for (int i = 0; i < StartingPopulation; ++i)
 			{
-				Person person = Person.GenerateStartingPerson(personUniqueId++);
+				Person person = Person.GenerateStartingPerson();
 				AddPerson(person);
 			}
 			for (int i = 0; i < StartingChildren; ++i)
 			{
-				Person person = Person.GenerateStartingChild(personUniqueId++);
+				Person person = Person.GenerateStartingChild();
 				AddPerson(person);
 			}
 		}

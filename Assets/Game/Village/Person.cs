@@ -2,7 +2,7 @@
 
 namespace Sovereign
 {
-	public class Person : IProducer
+	public class Person : GameObject, IProducer
 	{
 		private static readonly string[] ChiefTitles = {
 			"Chief", "Jarl", "Arl", "Earl"
@@ -38,7 +38,6 @@ namespace Sovereign
 
 		private int starvingCounter;
 
-		public uint Id { get; private set; }
 		public bool IsChief { get; set; }
 		public string Title { get; set; }
 		public int Age { get; set; }
@@ -51,14 +50,13 @@ namespace Sovereign
 
 		public event Action<Person> OnDeath = delegate {};
 
-		public Person(uint id)
+		public Person()
 		{
-			Id = id;
 		}
 
-		public static Person GenerateStartingChief(uint id)
+		public static Person GenerateStartingChief()
 		{
-			Person person = GenerateStartingPerson(id);
+			Person person = GenerateStartingPerson();
 			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
 			person.Age = rand.Next(20, 40);
 			person.Class = new Chief();
@@ -68,19 +66,19 @@ namespace Sovereign
 			return person;
 		}
 
-		public static Person GenerateStartingChild(uint id)
+		public static Person GenerateStartingChild()
 		{
-			Person person = GenerateStartingPerson(id);
+			Person person = GenerateStartingPerson();
 			person.Age = rand.Next(0, ComingOfAgeThreshold);
 			person.Class = new Child();
 			return person;
 		}
 
-		public static Person GenerateStartingPerson(uint id)
+		public static Person GenerateStartingPerson()
 		{
-			Person person = new Person(id);
+			Person person = new Person();
 			person.Age = rand.Next(14, 31);
-			person.Sex = id % 2 == 0 ? "Male" : "Female";
+			person.Sex = person.Uid % 2 == 0 ? "Male" : "Female";
 			person.Name = GetRandomName(person.Sex);
 			person.Class = new Farmer();
 
