@@ -68,7 +68,7 @@ namespace Sovereign
 			{
 				Person parentA = GetRandomPersonAndRemoveFromList(headsOfFamily);
 				freeAdults.Remove(parentA);
-				var oppositeSexFreeAdults = freeAdults.Where(p => p.Sex != parentA.Sex).ToList();
+				var oppositeSexFreeAdults = freeAdults.Where(p => p.Sex != parentA.Sex && !p.IsChief).ToList();
 				if (oppositeSexFreeAdults.Count == 0)
 				{
 					break;
