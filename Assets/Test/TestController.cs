@@ -22,8 +22,8 @@ namespace Sovereign.Test
 		{
 			enterCommandButton.onClick.AddListener(OnEnterCommandButtonClicked);
 
-			Commands.Initialize(this);
-			game = new GameManager(this);
+			Messenger.Initialize(this);
+			game = new GameManager();
 			player = new Player {
 				Id = "0",
 				Name = "Test"

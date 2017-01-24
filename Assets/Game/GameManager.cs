@@ -8,7 +8,6 @@ namespace Sovereign
 		private static GameManager instance;
 
 		private readonly List<IGameFlowHandler> gameFlowHandlers = new List<IGameFlowHandler>();
-		private readonly IPlayerMessenger messenger;
 		private readonly VillageManager villageManager = new VillageManager();
 		private readonly List<Player> players = new List<Player>();
 		private bool inGame;
@@ -18,10 +17,9 @@ namespace Sovereign
 		public VillageManager Villages { get { return villageManager; } }
 		public List<Player> Players { get { return players; } }
 
-		public GameManager(IPlayerMessenger messenger)
+		public GameManager()
 		{
 			instance = this;
-			this.messenger = messenger;
 
 			Commands.Add("-d", OnCommandDebugStart, 0, "-d", new[] { "-debug-start" });
 			Commands.Add("-new-game", OnCommandNewGame, 0, "-new-game", new[] { "-newgame", "-ng" });

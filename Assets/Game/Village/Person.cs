@@ -119,5 +119,20 @@ namespace Sovereign
 				Die();
 			}
 		}
+
+		public string GetDebugString()
+		{
+			string output = "[" + Uid + "] " + (Title != null ? Title + " " : "") + Name + " - " + Sex + ", " + Age + ", " + Class.Name;
+			if (Starving)
+			{
+				output += " (Starving)";
+			}
+			else if (Dead)
+			{
+				output += " (Dead)";
+			}
+
+			return output;
+		}
 	}
 }

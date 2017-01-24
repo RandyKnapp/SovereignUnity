@@ -14,12 +14,6 @@ namespace Sovereign
 		};
 
 		private static readonly Dictionary<string, CommandData> handlers = new Dictionary<string, CommandData>();
-		private static IPlayerMessenger messenger;
-
-		public static void Initialize(IPlayerMessenger externalMessenger)
-		{
-			messenger = externalMessenger;
-		}
 
 		public static void Add(string command, Action<Player, string, List<string>> handler, int requiredArgs, string helpText, string[] aliases = null)
 		{
@@ -90,13 +84,13 @@ namespace Sovereign
 				}
 				else
 				{
-					messenger.PostMessageToPlayer(player, "Command '" + command + "' has an incorrect number of arguments");
+					Messenger.PostMessageToPlayer(player, "Command '" + command + "' has an incorrect number of arguments");
 					PrintHelp(player, command);
 					return false;
 				}
 			}
 
-			messenger.PostMessageToPlayer(player, "Command '" + command + "' not found!");
+			Messenger.PostMessageToPlayer(player, "Command '" + command + "' not found!");
 			return false;
 		}
 
@@ -107,7 +101,7 @@ namespace Sovereign
 			if (data != null)
 			{
 				string message = data.helpText;
-				messenger.PostMessageToPlayer(player, message);
+				Messenger.PostMessageToPlayer(player, message);
 			}
 		}
 	}

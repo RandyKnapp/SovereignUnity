@@ -27,6 +27,7 @@ namespace Sovereign
 
 		public Village(Player player, string name)
 		{
+			Commands.Add("-view-person", OnCommandViewPerson, 1, "-view-person <person-uid>", new[] { "-vp" });
 			OwnerPlayer = player;
 			Name = name;
 			resources.Add(StartingFood);
@@ -173,6 +174,25 @@ namespace Sovereign
 			var theDead = population.Where(person => person.Dead).ToList();
 			population.RemoveAll(person => person.Dead);
 			graveyard.AddRange(theDead);
+		}
+
+		private void OnCommandViewPerson(Player player, string command, List<string> args)
+		{
+			if (player != OwnerPlayer)
+			{
+				return;
+			}
+
+			uint uid = Convert.ToUInt32(args[0]);
+			Person person = GameObject.GetGameObject<Person>(uid);
+			if (person != null)
+			{
+				Messenger.PostMessageToPlayer(player, person.GetDebugString());
+			}
+			else
+			{
+				Messenger.PostMessageToPlayer(player, "Could not find player with uid: " + uid);
+			}
 		}
 	}
 }
