@@ -56,11 +56,7 @@ namespace Sovereign.Test
 				output += " (Adults - M: " + maleCount + ", F: " + femaleCount + " / Children - M: " + maleChildCount + ", F: " + femaleChildCount + ")";
 				foreach (Person person in village.Population)
 				{
-					output += "\n  [" + person.Uid + "] " + (person.Title != null ? person.Title + " " : "") + person.Name + " - " + person.Sex + ", " + person.Age + ", " + person.Class.Name;
-					if (person.Starving)
-					{
-						output += " (Starving)";
-					}
+					output += "\n  " + person.GetDebugString();
 				}
 				/*foreach (Family family in village.Families)
 				{
