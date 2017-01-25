@@ -10,12 +10,13 @@ namespace Sovereign
 		private readonly List<IGameFlowHandler> gameFlowHandlers = new List<IGameFlowHandler>();
 		private readonly VillageManager villageManager = new VillageManager();
 		private readonly List<Player> players = new List<Player>();
+		private readonly TimelineManager timelineManager = new TimelineManager();
 		private bool inGame;
-		private int turnCounter;
 
 		public static GameManager Instance { get { return instance; } }
 		public VillageManager Villages { get { return villageManager; } }
 		public List<Player> Players { get { return players; } }
+		public TimelineManager Timeline { get { return timelineManager; } }
 
 		public GameManager()
 		{
@@ -39,13 +40,13 @@ namespace Sovereign
 			string message = "Sovereign - ";
 			message += inGame ? "Game Started" : "No game";
 			message += " - Players: " + players.Count;
-			message += "\nTurn: " + (turnCounter + 1);
+			message += "\n" + Timeline.GetStatusText();
 			return message;
 		}
 
 		public void NewGame()
 		{
-			turnCounter = 0;
+			Timeline.NewGame();
 			inGame = true;
 			players.Clear();
 			foreach (IGameFlowHandler gameFlowHandler in gameFlowHandlers)
@@ -53,7 +54,7 @@ namespace Sovereign
 				gameFlowHandler.NewGame();
 			}
 
-			BeginTurn(turnCounter);
+			BeginTurn(Timeline.Turn);
 		}
 
 		public void BeginTurn(int turnIndex)
@@ -103,9 +104,9 @@ namespace Sovereign
 
 		private void OnCommandEndTurn(Player player, string command, List<string> args)
 		{
-			EndTurn(turnCounter);
-			turnCounter++;
-			BeginTurn(turnCounter);
+			EndTurn(Timeline.Turn);
+			Timeline.EndTurn();
+			BeginTurn(Timeline.Turn);
 		}
 
 	}
