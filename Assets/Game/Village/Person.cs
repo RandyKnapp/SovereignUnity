@@ -1,7 +1,14 @@
 ﻿using System;
+using UnityEditor.iOS.Xcode;
 
 namespace Sovereign
 {
+	public enum Sex
+	{
+		Female,
+		Male
+	}
+	
 	public class Person : GameObject, IProducer
 	{
 		private static readonly string[] ChiefTitles = {
@@ -34,6 +41,7 @@ namespace Sovereign
 		};
 		private const int StarvationThreshold = 3;
 		private const int ComingOfAgeThreshold = 13;
+		private const int ChildbearingThreshold = 50;
 		private const int AverageLifespan = 70;
 		private const int LifespanRange = 10;
 		private static readonly Random rand = new Random();
@@ -52,7 +60,7 @@ namespace Sovereign
 		public bool IsChild { get { return Age < ComingOfAgeThreshold; } }
 		public bool IsSlave { get { return Class is Slave; } }
 		public string Name { get; set; }
-		public string Sex { get; set; }
+		public Sex Sex { get; set; }
 		public PersonClass Class { get; set; }
 		public bool Starving { get { return starvingCounter > 0; } }
 		public bool Dead { get; private set; }
@@ -88,7 +96,7 @@ namespace Sovereign
 			person.BeBorn();
 			person.Village = village;
 			person.SetStartingAge(rand.Next(ageMin, ageMax));
-			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
+			person.Sex = rand.Next(0, 2) == 0 ? Sex.Male : Sex.Female;
 			person.Name = GetRandomName(person.Sex);
 			person.Class = new Farmer();
 
@@ -102,9 +110,9 @@ namespace Sovereign
 			lifeCounter += birthSeason == Season.Winter ? 1 : 0;
 		}
 
-		private static string GetRandomName(string sex)
+		private static string GetRandomName(Sex sex)
 		{
-			return sex == "Male" ? MaleNames[rand.Next(MaleNames.Length)] : FemaleNames[rand.Next(FemaleNames.Length)];
+			return sex == Sex.Male ? MaleNames[rand.Next(MaleNames.Length)] : FemaleNames[rand.Next(FemaleNames.Length)];
 		}
 
 		public void BeBorn()
@@ -169,6 +177,35 @@ namespace Sovereign
 			}
 
 			return output;
+		}
+
+		private float GetBaseFertility()
+		{
+			// Men, girls before puberty and women after menopause do not have babies (in this game)
+			if (Sex == Sex.Male || Age < ComingOfAgeThreshold || Age >= ChildbearingThreshold)
+			{
+				return 0;
+			}
+
+			// Only married women have babies (in this game)
+			if (!Family.HasSpouse())
+			{
+				return 0;
+			}
+
+			// Fertility starts at 13 and peaks between 25 and 35 then tapers off until menopause
+			if (Age < 25)
+			{
+				return MathUtil.Lerp(0.5f, 1.0f, MathUtil.Map(ComingOfAgeThreshold, 25, Age));
+			}
+			else if (Age > 35)
+			{
+				return MathUtil.Lerp(1.0f, 0.0f, MathUtil.Map(25, 35, Age));
+			}
+			else
+			{
+				return 1.0f;
+			}
 		}
 	}
 }

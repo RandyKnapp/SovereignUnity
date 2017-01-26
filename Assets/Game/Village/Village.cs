@@ -37,7 +37,7 @@ namespace Sovereign
 			for (int i = 0; i < StartingPopulation; ++i)
 			{
 				Person person = Person.GenerateStartingPerson(this);
-				person.Sex = i % 2 == 0 ? "Male" : "Female";
+				person.Sex = i % 2 == 0 ? Sex.Male : Sex.Female;
 				AddPerson(person);
 			}
 
@@ -61,7 +61,7 @@ namespace Sovereign
 		private void GenerateStartingFamilies()
 		{
 			List<Person> freeAdults = new List<Person>(population);
-			List<Person> headsOfFamily = freeAdults.Where(p => p.Sex == "Male" || p.IsChief).ToList();
+			List<Person> headsOfFamily = freeAdults.Where(p => p.Sex == Sex.Male || p.IsChief).ToList();
 
 			for (int i = 0; i < StartingFamilies; ++i)
 			{

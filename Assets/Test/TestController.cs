@@ -49,10 +49,10 @@ namespace Sovereign.Test
 			{
 				output += "[" + village.Uid + "] Village: " + village.Name + " (Owner: " + village.OwnerPlayer.Name + ")";
 				output += "\nPopulation: " + village.Population.Count;
-				int maleCount = village.Population.Count(p => p.Sex == "Male" && !p.IsChild);
-				int femaleCount = village.Population.Count(p => p.Sex == "Female" && !p.IsChild);
-				int maleChildCount = village.Population.Count(p => p.Sex == "Male" && p.IsChild);
-				int femaleChildCount = village.Population.Count(p => p.Sex == "Female" && p.IsChild);
+				int maleCount = village.Population.Count(p => p.Sex == Sex.Male && !p.IsChild);
+				int femaleCount = village.Population.Count(p => p.Sex == Sex.Female && !p.IsChild);
+				int maleChildCount = village.Population.Count(p => p.Sex == Sex.Male && p.IsChild);
+				int femaleChildCount = village.Population.Count(p => p.Sex == Sex.Female && p.IsChild);
 				output += " (Adults - M: " + maleCount + ", F: " + femaleCount + " / Children - M: " + maleChildCount + ", F: " + femaleChildCount + ")";
 				foreach (Person person in village.Population)
 				{
