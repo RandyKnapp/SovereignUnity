@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.iOS.Xcode;
 
 namespace Sovereign
@@ -41,15 +43,18 @@ namespace Sovereign
 		};
 		private const int StarvationThreshold = 3;
 		private const int ComingOfAgeThreshold = 13;
-		private const int ChildbearingThreshold = 50;
 		private const int AverageLifespan = 70;
 		private const int LifespanRange = 10;
+		private const int PregnancyDuration = 2;
+		private const float BasePregnancyChance = 0.25f;
+		private const float BaseMarriageChance = 0.25f;
 		private static readonly Random rand = new Random();
 
 		private int starvingCounter;
 		private int lifeCounter;
 		private Season birthSeason;
 		private int deathCounter;
+		private int pregnancyCounter;
 
 		public Village Village { get; private set; }
 		public Family Family { get; set; }
@@ -58,15 +63,18 @@ namespace Sovereign
 		public int Age { get { return lifeCounter / 2; } set { lifeCounter = value * 2; } }
 		public Season BirthSeason { get { return birthSeason; } }
 		public bool IsChild { get { return Age < ComingOfAgeThreshold; } }
-		public bool IsSlave { get { return Class is Slave; } }
+		public bool IsSlave { get { return Family.HasOwner(); } }
 		public string Name { get; set; }
+		public string DisplayName { get { return (Title != null ? Title + " " : "") + Name; } }
 		public Sex Sex { get; set; }
 		public PersonClass Class { get; set; }
 		public bool Starving { get { return starvingCounter > 0; } }
 		public bool Dead { get; private set; }
+		public bool IsPregnant { get { return pregnancyCounter > 0; } }
 
 		public event Action<Person> OnDeath = delegate {};
 		public event Action<Person> OnComingOfAge = delegate {};
+		public event Action<Person, Person> OnHaveBaby = delegate {};
 
 		public Person()
 		{
@@ -86,7 +94,6 @@ namespace Sovereign
 		public static Person GenerateStartingChild(Village village)
 		{
 			Person person = GenerateStartingPerson(village, 0, ComingOfAgeThreshold);
-			person.Class = new Child();
 			return person;
 		}
 
@@ -96,8 +103,6 @@ namespace Sovereign
 			person.BeBorn();
 			person.Village = village;
 			person.SetStartingAge(rand.Next(ageMin, ageMax));
-			person.Sex = rand.Next(0, 2) == 0 ? Sex.Male : Sex.Female;
-			person.Name = GetRandomName(person.Sex);
 			person.Class = new Farmer();
 
 			return person;
@@ -120,6 +125,9 @@ namespace Sovereign
 			lifeCounter = 0;
 			birthSeason = GameManager.Instance.Timeline.Season;
 			deathCounter = (AverageLifespan * 2) + rand.Next(-LifespanRange * 2, LifespanRange * 2);
+			Sex = rand.Next(0, 2) == 0 ? Sex.Male : Sex.Female;
+			Name = GetRandomName(Sex);
+			Class = new Child();
 		}
 
 		public void AgeOneSeason()
@@ -137,6 +145,23 @@ namespace Sovereign
 			{
 				Die();
 			}
+
+			if (Dead)
+			{
+				return;
+			}
+
+			CheckForMarriage();
+			CheckForPregnancy();
+
+			if (IsPregnant)
+			{
+				pregnancyCounter--;
+				if (pregnancyCounter == 0)
+				{
+					HaveBaby();
+				}
+			}
 		}
 
 		public void Die()
@@ -152,7 +177,7 @@ namespace Sovereign
 
 		public Food GetFoodRequired()
 		{
-			return new Food(1);
+			return new Food(0);
 		}
 
 		public void GoHungry()
@@ -164,48 +189,207 @@ namespace Sovereign
 			}
 		}
 
-		public string GetDebugString()
+		public bool CanMarry(Person newSpouse)
 		{
-			string output = "[" + Uid + "] " + (Title != null ? Title + " " : "") + Name + " - " + Sex + ", " + Age + ", " + Class.Name;
-			if (Starving)
+			return !Family.HasSpouse() && !newSpouse.Family.HasSpouse();
+		}
+
+		public void Marry(Person newSpouse)
+		{
+			if (CanMarry(newSpouse))
 			{
-				output += " (Starving)";
+				newSpouse.BecomeFreePerson();
+				Family.AddSpouse(newSpouse);
+				newSpouse.Family.AddSpouse(this);
+
+				Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " and " + newSpouse.DisplayName + " were married!");
 			}
-			else if (Dead)
+		}
+
+		public void HaveBaby()
+		{
+			pregnancyCounter = 0;
+
+			Person baby = new Person();
+			baby.BeBorn();
+			baby.Village = Village;
+			Family.AddChildToFamily(this, baby);
+			OnHaveBaby(this, baby);
+
+			Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " gave birth to a baby! (" + baby.DisplayName + ", " + baby.Sex + ")");
+		}
+
+		public void BecomeFreePerson()
+		{
+			if (IsSlave)
 			{
-				output += " (Dead)";
+				Class = new Farmer();
+				Family.FreeSlave(Family.Owner, this);
+				Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " became a free person!");
+			}
+		}
+
+		public void Enslave(Person owner)
+		{
+			if (!IsSlave)
+			{
+				Class = new Slave();
+				Family.AddSlaveToOwner(owner, this);
+				Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " was enslaved (Owner: " + owner.DisplayName + ")!");
+			}
+		}
+
+		public void CheckForMarriage()
+		{
+			if (!Family.HasSpouse())
+			{
+				Person potentialSpouse = GetPotentialMate();
+				if (potentialSpouse != null)
+				{
+					const float marriageChance = BaseMarriageChance;
+					bool getMarried = rand.NextDouble() < marriageChance;
+					if (getMarried)
+					{
+						Marry(potentialSpouse);
+					}
+				}
+			}
+		}
+
+		public void CheckForPregnancy()
+		{
+			if (Sex == Sex.Male || IsPregnant)
+			{
+				return;
 			}
 
-			return output;
+			Person mate = GetPotentialMate();
+			if (mate == null)
+			{
+				return;
+			}
+
+			float seasonalModifier = GameManager.Instance.Timeline.Season == Season.Winter ? 1.0f : 0.5f;
+			float marriageModifier = Family.HasSpouse() ? 1.0f : 0.2f;
+			float fertility = GetBaseFertility();
+			const float basePregnancyChance = BasePregnancyChance;
+			float pregnancyChance = basePregnancyChance * fertility * seasonalModifier * marriageModifier;
+
+			bool pregnant = rand.NextDouble() < pregnancyChance;
+			if (pregnant)
+			{
+				if (mate != Family.Spouse)
+				{
+					Marry(mate);
+				}
+
+				pregnancyCounter = PregnancyDuration;
+				Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " is pregnant!");
+			}
+		}
+
+		private Person GetPotentialMate()
+		{
+			if (Family.HasSpouse())
+			{
+				return Family.Spouse;
+			}
+
+			List<Person> potentialMates = Village.Population.Where(p => !p.Dead && !p.IsChild && !p.IsSlave && Math.Abs(p.Age - Age) < 5 && p.Sex != Sex).ToList();
+			if (potentialMates.Count == 0)
+			{
+				return null;
+			}
+			return potentialMates[rand.Next(0, potentialMates.Count)];
 		}
 
 		private float GetBaseFertility()
 		{
-			// Men, girls before puberty and women after menopause do not have babies (in this game)
-			if (Sex == Sex.Male || Age < ComingOfAgeThreshold || Age >= ChildbearingThreshold)
+			if (Age < ComingOfAgeThreshold)
 			{
 				return 0;
 			}
 
-			// Only married women have babies (in this game)
-			if (!Family.HasSpouse())
+			return Sex == Sex.Male ? GetMaleFertility() : GetFemaleFertility();
+		}
+
+		private float GetMaleFertility()
+		{
+			const int MalePeakFertilityBegin = 20;
+			const int MalePeakFertilityEnd = 40;
+			const int ChildbearingThreshold = 80;
+
+			if (Age > ChildbearingThreshold)
 			{
 				return 0;
 			}
-
-			// Fertility starts at 13 and peaks between 25 and 35 then tapers off until menopause
-			if (Age < 25)
+			else if (Age > MalePeakFertilityEnd)
 			{
-				return MathUtil.Lerp(0.5f, 1.0f, MathUtil.Map(ComingOfAgeThreshold, 25, Age));
+				return MathUtil.Lerp(1.0f, 0.0f, MathUtil.Map(MalePeakFertilityEnd, ChildbearingThreshold, Age));
 			}
-			else if (Age > 35)
+			else if (Age < MalePeakFertilityBegin)
 			{
-				return MathUtil.Lerp(1.0f, 0.0f, MathUtil.Map(25, 35, Age));
+				return MathUtil.Lerp(0.5f, 1.0f, MathUtil.Map(ComingOfAgeThreshold, MalePeakFertilityBegin, Age));
 			}
 			else
 			{
 				return 1.0f;
 			}
+		}
+
+		private float GetFemaleFertility()
+		{
+			const int FemalePeakFertilityBegin = 25;
+			const int FemalePeakFertilityEnd = 35;
+			const int ChildbearingThreshold = 50;
+
+			// Fertility starts at 13 and peaks between 25 and 35 then tapers off until menopause
+			if (Age > ChildbearingThreshold)
+			{
+				return 0;
+			}
+			else if (Age > FemalePeakFertilityEnd)
+			{
+				return MathUtil.Lerp(1.0f, 0.0f, MathUtil.Map(FemalePeakFertilityEnd, ChildbearingThreshold, Age));
+			}
+			else if (Age < FemalePeakFertilityBegin)
+			{
+				return MathUtil.Lerp(0.5f, 1.0f, MathUtil.Map(ComingOfAgeThreshold, FemalePeakFertilityBegin, Age));
+			}
+			else
+			{
+				return 1.0f;
+			}
+		}
+
+		public string GetDebugString()
+		{
+			string output = "[" + Uid + "] " + DisplayName + " - " + Sex + ", " + Age + ", " + Class.Name;
+
+			List<string> attributes = new List<string>();
+			if (IsChief)
+			{
+				attributes.Add("Chief");
+			}
+			if (IsPregnant)
+			{
+				attributes.Add("Pregnant");
+			}
+			if (Starving)
+			{
+				attributes.Add("Starving");
+			}
+			if (Dead)
+			{
+				attributes.Add("Dead");
+			}
+
+			if (attributes.Count > 0)
+			{
+				output += " (" + string.Join(", ", attributes.ToArray()) + ")";
+			}
+
+			return output;
 		}
 	}
 }

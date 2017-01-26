@@ -176,5 +176,14 @@ namespace Sovereign
 			owner.Family.AddSlave(slave);
 			slave.Family.AddOwner(owner);
 		}
+
+		public static void FreeSlave(Person owner, Person slave)
+		{
+			if (owner.Family.IsOwnerOf(slave))
+			{
+				owner.Family.RemoveSlave(slave);
+				slave.Family.RemoveOwner();
+			}
+		}
 	}
 }

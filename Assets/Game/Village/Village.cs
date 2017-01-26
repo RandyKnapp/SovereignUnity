@@ -18,6 +18,7 @@ namespace Sovereign
 		private readonly List<Person> population = new List<Person>();
 		private readonly List<Person> graveyard = new List<Person>();
 		private readonly ResourcePack resources = new ResourcePack();
+		private readonly List<Person> births = new List<Person>();
 
 		public string Name { get { return name; } private set { name = value; } }
 		public Player OwnerPlayer { get { return player; } private set { player = value; } }
@@ -120,6 +121,7 @@ namespace Sovereign
 		{
 			person.OnDeath += OnPersonDeath;
 			person.OnComingOfAge += OnPersonComesOfAge;
+			person.OnHaveBaby += OnPersonHasBaby;
 			population.Add(person);
 		}
 
@@ -131,6 +133,11 @@ namespace Sovereign
 		{
 		}
 
+		private void OnPersonHasBaby(Person parent, Person baby)
+		{
+			births.Add(baby);
+		}
+
 		public void NewGame() { }
 		public void EndGame() { }
 
@@ -140,6 +147,7 @@ namespace Sovereign
 			{
 				person.AgeOneSeason();
 			}
+			AddBabiesToPopulation();
 		}
 
 		public void EndTurn(int turnIndex)
@@ -147,6 +155,15 @@ namespace Sovereign
 			GatherProduction();
 			FeedPeople();
 			BuryDead();
+		}
+
+		private void AddBabiesToPopulation()
+		{
+			foreach (Person p in births)
+			{
+				AddPerson(p);
+			}
+			births.Clear();
 		}
 
 		private void GatherProduction()
