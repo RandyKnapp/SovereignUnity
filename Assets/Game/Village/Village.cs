@@ -119,10 +119,15 @@ namespace Sovereign
 		private void AddPerson(Person person)
 		{
 			person.OnDeath += OnPersonDeath;
+			person.OnComingOfAge += OnPersonComesOfAge;
 			population.Add(person);
 		}
 
 		private void OnPersonDeath(Person person)
+		{
+		}
+
+		private void OnPersonComesOfAge(Person person)
 		{
 		}
 
@@ -131,6 +136,10 @@ namespace Sovereign
 
 		public void BeginTurn(int turnIndex)
 		{
+			foreach (Person person in population)
+			{
+				person.AgeOneSeason();
+			}
 		}
 
 		public void EndTurn(int turnIndex)

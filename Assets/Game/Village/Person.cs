@@ -34,15 +34,21 @@ namespace Sovereign
 		};
 		private const int StarvationThreshold = 3;
 		private const int ComingOfAgeThreshold = 13;
+		private const int AverageLifespan = 70;
+		private const int LifespanRange = 10;
 		private static readonly Random rand = new Random();
 
 		private int starvingCounter;
+		private int lifeCounter;
+		private Season birthSeason;
+		private int deathCounter;
 
 		public Village Village { get; private set; }
 		public Family Family { get; set; }
 		public bool IsChief { get; set; }
 		public string Title { get; set; }
-		public int Age { get; set; }
+		public int Age { get { return lifeCounter / 2; } set { lifeCounter = value * 2; } }
+		public Season BirthSeason { get { return birthSeason; } }
 		public bool IsChild { get { return Age < ComingOfAgeThreshold; } }
 		public bool IsSlave { get { return Class is Slave; } }
 		public string Name { get; set; }
@@ -52,6 +58,7 @@ namespace Sovereign
 		public bool Dead { get; private set; }
 
 		public event Action<Person> OnDeath = delegate {};
+		public event Action<Person> OnComingOfAge = delegate {};
 
 		public Person()
 		{
@@ -60,9 +67,7 @@ namespace Sovereign
 
 		public static Person GenerateStartingChief(Village village)
 		{
-			Person person = GenerateStartingPerson(village);
-			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
-			person.Age = rand.Next(20, 40);
+			Person person = GenerateStartingPerson(village, 20, 40);
 			person.Class = new Chief();
 			person.IsChief = true;
 			person.Title = ChiefTitles[rand.Next(0, ChiefTitles.Length)];
@@ -72,17 +77,17 @@ namespace Sovereign
 
 		public static Person GenerateStartingChild(Village village)
 		{
-			Person person = GenerateStartingPerson(village);
-			person.Age = rand.Next(0, ComingOfAgeThreshold);
+			Person person = GenerateStartingPerson(village, 0, ComingOfAgeThreshold);
 			person.Class = new Child();
 			return person;
 		}
 
-		public static Person GenerateStartingPerson(Village village)
+		public static Person GenerateStartingPerson(Village village, int ageMin = 14, int ageMax = 31)
 		{
 			Person person = new Person();
+			person.BeBorn();
 			person.Village = village;
-			person.Age = rand.Next(14, 31);
+			person.SetStartingAge(rand.Next(ageMin, ageMax));
 			person.Sex = rand.Next(0, 2) == 0 ? "Male" : "Female";
 			person.Name = GetRandomName(person.Sex);
 			person.Class = new Farmer();
@@ -90,9 +95,40 @@ namespace Sovereign
 			return person;
 		}
 
+		private void SetStartingAge(int age)
+		{
+			lifeCounter = age * 2;
+			birthSeason = rand.Next(0, 2) == 0 ? Season.Summer : Season.Winter;
+			lifeCounter += birthSeason == Season.Winter ? 1 : 0;
+		}
+
 		private static string GetRandomName(string sex)
 		{
 			return sex == "Male" ? MaleNames[rand.Next(MaleNames.Length)] : FemaleNames[rand.Next(FemaleNames.Length)];
+		}
+
+		public void BeBorn()
+		{
+			lifeCounter = 0;
+			birthSeason = GameManager.Instance.Timeline.Season;
+			deathCounter = (AverageLifespan * 2) + rand.Next(-LifespanRange * 2, LifespanRange * 2);
+		}
+
+		public void AgeOneSeason()
+		{
+			bool wasChild = IsChild;
+			bool wasAlive = !Dead;
+			lifeCounter++;
+			if (wasChild && !IsChild)
+			{
+				Class = new Farmer();
+				OnComingOfAge(this);
+			}
+
+			if (wasAlive && lifeCounter > deathCounter)
+			{
+				Die();
+			}
 		}
 
 		public void Die()
