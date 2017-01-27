@@ -280,8 +280,9 @@ namespace Sovereign
 			float seasonalModifier = GameManager.Instance.Timeline.Season == Season.Winter ? 1.0f : 0.5f;
 			float marriageModifier = Family.HasSpouse() ? 1.0f : 0.2f;
 			float fertility = GetBaseFertility();
+			float familySizeChance = MathUtil.Lerp(1.0f, 0.01f, Family.NumberOfChildren() / 5.0f);
 			const float basePregnancyChance = BasePregnancyChance;
-			float pregnancyChance = basePregnancyChance * fertility * seasonalModifier * marriageModifier;
+			float pregnancyChance = basePregnancyChance * fertility * seasonalModifier * marriageModifier * familySizeChance;
 
 			bool pregnant = rand.NextDouble() < pregnancyChance;
 			if (pregnant)
@@ -303,7 +304,7 @@ namespace Sovereign
 				return Family.Spouse;
 			}
 
-			List<Person> potentialMates = Village.Population.Where(p => !p.Dead && !p.IsChild && !p.IsSlave && Math.Abs(p.Age - Age) < 5 && p.Sex != Sex && !p.Family.HasSpouse()).ToList();
+			List<Person> potentialMates = Village.Population.Where(p => !p.Dead && !p.IsChild && !p.IsSlave && Math.Abs(p.Age - Age) < 5 && p.Sex != Sex && !p.Family.IsRelated(this) && !p.Family.HasSpouse()).ToList();
 			if (potentialMates.Count == 0)
 			{
 				return null;
