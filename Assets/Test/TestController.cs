@@ -14,6 +14,8 @@ namespace Sovereign.Test
 		private Button enterCommandButton;
 		[SerializeField]
 		private Text villageDebugText;
+		[SerializeField]
+		private Button endTurnButton;
 
 		private GameManager game;
 		private Player player;
@@ -21,6 +23,7 @@ namespace Sovereign.Test
 		private void Start()
 		{
 			enterCommandButton.onClick.AddListener(OnEnterCommandButtonClicked);
+			endTurnButton.onClick.AddListener(OnEndTurnButtonClicked);
 
 			Messenger.Initialize(this);
 			game = new GameManager();
@@ -54,39 +57,39 @@ namespace Sovereign.Test
 				int maleChildCount = village.Population.Count(p => p.Sex == Sex.Male && p.IsChild);
 				int femaleChildCount = village.Population.Count(p => p.Sex == Sex.Female && p.IsChild);
 				output += " (Adults - M: " + maleCount + ", F: " + femaleCount + " / Children - M: " + maleChildCount + ", F: " + femaleChildCount + ")";
-				foreach (Person person in village.Population)
+
+				if (village.Population.Count < 50)
 				{
-					output += "\n  " + person.GetDebugString();
+					foreach (Person person in village.Population)
+					{
+						output += "\n  " + person.GetDebugString();
+					}
 				}
-				/*foreach (Family family in village.Families)
+				else
 				{
-					Person head = family.HeadOfFamily;
-					output += "\n  [" + family.Uid + "] " + family.Name + " family:";
-					output += "\n    " + DebugString(head);
-					if (family.HasSpouse(head))
-					{
-						output += "\n    + " + DebugString(family.GetSpouse(head));
-					}
-
-					if (family.HasChildren(head))
-					{
-						output += "\n    - Children:";
-						foreach (Person child in family.GetChildren(head))
-						{
-							output += "\n      - " + DebugString(child);
-						}
-					}
-
-					if (family.OwnsSlaves(head))
-					{
-						output += "\n    - Slaves:";
-						foreach (Person slave in family.GetSlaves(head))
-						{
-							output += "\n      - " + DebugString(slave);
-						}
-					}
+					output += "\n  " + village.GetChief().GetDebugString();
 					
-				}*/
+					Dictionary<string, List<Person>> peoplePerClass = new Dictionary<string, List<Person>>();
+					foreach (Person person in village.Population)
+					{
+						List<Person> people;
+						peoplePerClass.TryGetValue(person.Class.Name, out people);
+						if (people == null)
+						{
+							people = new List<Person> { person };
+							peoplePerClass.Add(person.Class.Name, people);
+						}
+						else
+						{
+							people.Add(person);
+						}
+					}
+
+					foreach (var entry in peoplePerClass)
+					{
+						output += "\n - " + entry.Key + ": " + entry.Value.Count;
+					}
+				}
 
 				if (village.Graveyard.Count > 0)
 				{
@@ -111,6 +114,11 @@ namespace Sovereign.Test
 		{
 			ProcessCommandString(commandInputField.text);
 			ClearAndReactivateTextField();
+		}
+
+		private void OnEndTurnButtonClicked()
+		{
+			ProcessCommandString("-et");
 		}
 
 		private void ClearAndReactivateTextField()

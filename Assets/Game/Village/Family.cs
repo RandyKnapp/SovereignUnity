@@ -148,6 +148,53 @@ namespace Sovereign
 			return owner != 0;
 		}
 
+		public Person GetHeir()
+		{
+			Person heir = null;
+			if (HasChildren())
+			{
+				List<Person> maleChildren = Children.Where(p => !p.IsChild && p.Sex == Sex.Male).ToList();
+				if (maleChildren.Count > 0)
+				{
+					maleChildren.Sort((a, b) => b.Age.CompareTo(a.Age));
+					heir = maleChildren[0];
+				}
+			}
+
+			// Spouse
+			if (heir == null)
+			{
+				if (HasSpouse())
+				{
+					heir = Spouse;
+				}
+			}
+
+			// Oldest adult female child
+			if (heir == null)
+			{
+				List<Person> femaleChildren = Children.Where(p => !p.IsChild && p.Sex == Sex.Female).ToList();
+				if (femaleChildren.Count > 0)
+				{
+					femaleChildren.Sort((a, b) => b.Age.CompareTo(a.Age));
+					heir = femaleChildren[0];
+				}
+			}
+
+			// Oldest adult brother
+			if (heir == null)
+			{
+				List<Person> maleSiblings = Siblings.Where(p => !p.IsChild && p.Sex == Sex.Male).ToList();
+				if (maleSiblings.Count > 0)
+				{
+					maleSiblings.Sort((a, b) => b.Age.CompareTo(a.Age));
+					heir = maleSiblings[0];
+				}
+			}
+
+			return heir;
+		}
+
 		public static void AddChildToFamily(Person parent, Person child)
 		{
 			Person parentSpouse = parent.Family.Spouse;
@@ -183,6 +230,43 @@ namespace Sovereign
 			{
 				owner.Family.RemoveSlave(slave);
 				slave.Family.RemoveOwner();
+			}
+		}
+
+		public static void HandleDeath(Person person)
+		{
+			Family f = person.Family;
+			if (f.HasSpouse())
+			{
+				f.Spouse.Family.spouse = 0;
+			}
+			if (f.HasChildren())
+			{
+				f.Children.ForEach(child => child.Family.parents.Remove(person.Uid));
+			}
+			if (f.Siblings.Count > 0)
+			{
+				f.Siblings.ForEach(sib => sib.Family.siblings.Remove(person.Uid));
+			}
+			if (f.Parents.Count > 0)
+			{
+				f.Parents.ForEach(parent => parent.Family.children.Remove(person.Uid));
+			}
+			if (f.OwnsSlaves())
+			{
+				Person heir = f.GetHeir();
+				if (heir != null)
+				{
+					f.Slaves.ForEach(slave => Family.AddSlaveToOwner(heir, slave));
+				}
+				else
+				{
+					f.Slaves.ForEach(slave => Family.FreeSlave(person, slave));
+				}
+			}
+			if (f.HasOwner())
+			{
+				f.Owner.Family.slaves.Remove(person.Uid);
 			}
 		}
 	}

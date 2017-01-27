@@ -41,6 +41,7 @@ namespace Sovereign
 			"Sassa", "Sigfrid", "Signy", "Sigrun", "Siri", "Siv", "Solveig", "Sylvi",
 			"Thora", "Thyra", "Tone", "Tordis", "Torhild", "Tove", "Turid", "Tyra", "Ylva"
 		};
+		private static readonly string[] SpouseNames = { "wife", "husband" };
 		private const int StarvationThreshold = 3;
 		private const int ComingOfAgeThreshold = 13;
 		private const int AverageLifespan = 70;
@@ -108,6 +109,11 @@ namespace Sovereign
 			return person;
 		}
 
+		public static string GetSpouseTypeName(Person person)
+		{
+			return SpouseNames[(int)person.Sex];
+		}
+
 		private void SetStartingAge(int age)
 		{
 			lifeCounter = age * 2;
@@ -166,8 +172,10 @@ namespace Sovereign
 
 		public void Die()
 		{
+			Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " has died!");
 			Dead = true;
 			OnDeath(this);
+			Family.HandleDeath(this);
 		}
 
 		public ResourcePack Produce()
@@ -295,7 +303,7 @@ namespace Sovereign
 				return Family.Spouse;
 			}
 
-			List<Person> potentialMates = Village.Population.Where(p => !p.Dead && !p.IsChild && !p.IsSlave && Math.Abs(p.Age - Age) < 5 && p.Sex != Sex).ToList();
+			List<Person> potentialMates = Village.Population.Where(p => !p.Dead && !p.IsChild && !p.IsSlave && Math.Abs(p.Age - Age) < 5 && p.Sex != Sex && !p.Family.HasSpouse()).ToList();
 			if (potentialMates.Count == 0)
 			{
 				return null;

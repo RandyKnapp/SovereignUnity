@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Sovereign
 {
@@ -127,6 +128,10 @@ namespace Sovereign
 
 		private void OnPersonDeath(Person person)
 		{
+			if (person.IsChief)
+			{
+				SelectNewChief(person);
+			}
 		}
 
 		private void OnPersonComesOfAge(Person person)
@@ -202,6 +207,41 @@ namespace Sovereign
 			graveyard.AddRange(theDead);
 		}
 
+		private void SelectNewChief(Person oldChief)
+		{
+			Person newChief = oldChief.Family.GetHeir();
+			if (newChief != null)
+			{
+				if (newChief.Family.IsChildOf(oldChief))
+				{
+					Messenger.PostMessageToPlayer(OwnerPlayer, oldChief.DisplayName + "'s oldest " + (newChief.Sex == Sex.Male ? "son" : "daughter") + " " + newChief.DisplayName + " has become chief!");
+				}
+				else if (newChief.Family.IsSpouse(oldChief))
+				{
+					Messenger.PostMessageToPlayer(OwnerPlayer, oldChief.DisplayName + "'s " + Person.GetSpouseTypeName(newChief) + " " + newChief.DisplayName + " has become chief!");
+				}
+				else if (newChief.Family.IsSibling(oldChief))
+				{
+					Messenger.PostMessageToPlayer(OwnerPlayer, oldChief.DisplayName + "'s brother " + newChief.DisplayName + " has become chief!");
+				}
+			}
+
+			// TODO: Fight for chief
+			if (newChief == null)
+			{
+				List<Person> eligiblePeople = population.Where(p => !p.IsChild && !p.IsSlave && !p.IsChief).ToList();
+				newChief = eligiblePeople[rand.Next(0, eligiblePeople.Count)];
+				Messenger.PostMessageToPlayer(OwnerPlayer, "After the old chief died without heirs, those who deemed themselves worthy fought for the title. " 
+					+ newChief.DisplayName + " emerged victorious and was named the new chief!");
+			}
+
+			if (newChief != null)
+			{
+				newChief.IsChief = true;
+				newChief.Title = oldChief.Title;
+			}
+		}
+
 		private void OnCommandViewPerson(Player player, string command, List<string> args)
 		{
 			if (player != OwnerPlayer)
@@ -219,6 +259,11 @@ namespace Sovereign
 			{
 				Messenger.PostMessageToPlayer(player, "Could not find player with uid: " + uid);
 			}
+		}
+
+		public Person GetChief()
+		{
+			return population.Find(p => p.IsChief && !p.Dead);
 		}
 	}
 }
