@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.Assertions.Must;
 
 namespace Sovereign
 {
@@ -43,11 +44,15 @@ namespace Sovereign
 		private static readonly string[] SpouseNames = { "wife", "husband" };
 		private const int StarvationThreshold = 3;
 		private const int ComingOfAgeThreshold = 13;
-		private const int AverageLifespan = 70;
+		private const int AverageLifespan = 50;
 		private const int LifespanRange = 10;
 		private const int PregnancyDuration = 2;
 		private const float BasePregnancyChance = 0.25f;
 		private const float BaseMarriageChance = 0.25f;
+		private const float LiveBirthChance = 0.6f;
+		private const float SurviveChildbirthChance = 0.9f;
+		private const float SurviveInfancyChance = 0.5f;
+		private const float SurviveChildhoodChance = 0.5f;
 		private static readonly Random rand = new Random();
 
 		private int starvingCounter;
@@ -150,6 +155,18 @@ namespace Sovereign
 			if (wasAlive && lifeCounter > deathCounter)
 			{
 				Die();
+				if (Age < 2)
+				{
+					Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " has died in infancy!");
+				}
+				else if (Age < ComingOfAgeThreshold)
+				{
+					Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " has died from sickness as a child!");
+				}
+				else
+				{
+					Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " has died of old age!");
+				}
 			}
 
 			if (Dead)
@@ -172,7 +189,6 @@ namespace Sovereign
 
 		public void Die()
 		{
-			Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " has died!");
 			Dead = true;
 			OnDeath(this);
 			Family.HandleDeath(this);
@@ -194,6 +210,7 @@ namespace Sovereign
 			if (starvingCounter >= StarvationThreshold)
 			{
 				Die();
+				Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " has died of starvation!");
 			}
 		}
 
@@ -206,6 +223,7 @@ namespace Sovereign
 		{
 			if (CanMarry(newSpouse))
 			{
+				BecomeFreePerson();
 				newSpouse.BecomeFreePerson();
 				Family.AddSpouse(newSpouse);
 				newSpouse.Family.AddSpouse(this);
@@ -224,7 +242,11 @@ namespace Sovereign
 			Family.AddChildToFamily(this, baby);
 			OnHaveBaby(this, baby);
 
-			Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " gave birth to a baby! (" + baby.DisplayName + ", " + baby.Sex + ")");
+			CheckForBirthComplications(baby);
+			if (!baby.Dead)
+			{
+				Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " gave birth to a baby! (" + baby.DisplayName + ", " + baby.Sex + ")");
+			}
 		}
 
 		public void BecomeFreePerson()
@@ -352,7 +374,6 @@ namespace Sovereign
 			const int FemalePeakFertilityEnd = 35;
 			const int ChildbearingThreshold = 50;
 
-			// Fertility starts at 13 and peaks between 25 and 35 then tapers off until menopause
 			if (Age > ChildbearingThreshold)
 			{
 				return 0;
@@ -368,6 +389,31 @@ namespace Sovereign
 			else
 			{
 				return 1.0f;
+			}
+		}
+
+		private void CheckForBirthComplications(Person baby)
+		{
+			if (rand.NextDouble() > LiveBirthChance)
+			{
+				baby.Die();
+				Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " gave birth, but the baby did not survive.");
+			}
+
+			if (rand.NextDouble() > SurviveChildbirthChance)
+			{
+				Die();
+				Messenger.PostMessageToPlayer(Village.OwnerPlayer, DisplayName + " died in childbirth.");
+			}
+
+			if (rand.NextDouble() > SurviveInfancyChance)
+			{
+				baby.deathCounter = 2;
+			}
+
+			if (rand.NextDouble() > SurviveChildhoodChance)
+			{
+				baby.deathCounter = (ComingOfAgeThreshold * 2) - rand.Next(1, 14);
 			}
 		}
 

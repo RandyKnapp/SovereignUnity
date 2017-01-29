@@ -294,6 +294,7 @@ namespace Sovereign
 			if (person != null)
 			{
 				person.Die();
+				Messenger.PostMessageToPlayer(OwnerPlayer, person.DisplayName + " KILLED BY DEBUG COMMAND");
 			}
 		}
 
