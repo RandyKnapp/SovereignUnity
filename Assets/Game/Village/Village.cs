@@ -30,6 +30,9 @@ namespace Sovereign
 		public Village(Player player, string name)
 		{
 			Commands.Add("-view-person", OnCommandViewPerson, 1, "-view-person <person-uid>", new[] { "-vp" });
+			Commands.Add("-view-family", OnCommandViewFamily, 1, "-view-family <person-uid>", new[] { "-vf" });
+			Commands.Add("-vkill-person", OnCommandKillPerson, 1, "-kill-person <person-uid>", new[] { "-kill" });
+
 			OwnerPlayer = player;
 			Name = name;
 			resources.Add(StartingFood);
@@ -226,16 +229,26 @@ namespace Sovereign
 				}
 			}
 
-			// TODO: Fight for chief
 			if (newChief == null)
 			{
 				List<Person> eligiblePeople = population.Where(p => !p.IsChild && !p.IsSlave && !p.IsChief).ToList();
-				newChief = eligiblePeople[rand.Next(0, eligiblePeople.Count)];
-				Messenger.PostMessageToPlayer(OwnerPlayer, "After the old chief died without heirs, those who deemed themselves worthy fought for the title. " 
-					+ newChief.DisplayName + " emerged victorious and was named the new chief!");
+				if (eligiblePeople.Count > 0)
+				{
+					// TODO: Fight for chief
+					newChief = eligiblePeople[rand.Next(0, eligiblePeople.Count)];
+					Messenger.PostMessageToPlayer(OwnerPlayer, "After the old chief died without heirs, those who deemed themselves worthy fought for the title. "
+						+ newChief.DisplayName + " emerged victorious and was named the new chief!");
+				}
 			}
 
-			if (newChief != null)
+			if (newChief == null)
+			{
+				newChief = Person.GenerateStartingChief(this);
+				// TODO: Generate new chief's entourage
+				Messenger.PostMessageToPlayer(OwnerPlayer, "The old chief died without heirs and the village has become too small to support itself. A foreign chief claims it for themselves. "
+					+ newChief.DisplayName + " is now the chief of the village.");
+			}
+			else
 			{
 				newChief.IsChief = true;
 				newChief.Title = oldChief.Title;
@@ -249,15 +262,53 @@ namespace Sovereign
 				return;
 			}
 
-			uint uid = Convert.ToUInt32(args[0]);
-			Person person = GameObject.GetGameObject<Person>(uid);
+			Person person = PersonCommandHelper(args);
 			if (person != null)
 			{
 				Messenger.PostMessageToPlayer(player, person.GetDebugString());
 			}
+		}
+
+		private void OnCommandViewFamily(Player player, string command, List<string> args)
+		{
+			if (player != OwnerPlayer)
+			{
+				return;
+			}
+
+			Person person = PersonCommandHelper(args);
+			if (person != null)
+			{
+				Messenger.PostMessageToPlayer(player, person.Family.GetDebugString());
+			}
+		}
+
+		private void OnCommandKillPerson(Player player, string command, List<string> args)
+		{
+			if (player != OwnerPlayer)
+			{
+				return;
+			}
+
+			Person person = PersonCommandHelper(args);
+			if (person != null)
+			{
+				person.Die();
+			}
+		}
+
+		private Person PersonCommandHelper(List<string> args)
+		{
+			uint uid = Convert.ToUInt32(args[0]);
+			Person person = GameObject.GetGameObject<Person>(uid);
+			if (person != null)
+			{
+				return person;
+			}
 			else
 			{
 				Messenger.PostMessageToPlayer(player, "Could not find player with uid: " + uid);
+				return null;
 			}
 		}
 

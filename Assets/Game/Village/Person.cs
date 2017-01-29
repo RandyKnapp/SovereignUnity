@@ -94,6 +94,7 @@ namespace Sovereign
 		public static Person GenerateStartingChild(Village village)
 		{
 			Person person = GenerateStartingPerson(village, 0, ComingOfAgeThreshold);
+			person.Class = new Child();
 			return person;
 		}
 

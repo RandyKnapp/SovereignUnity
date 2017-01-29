@@ -18,9 +18,9 @@ namespace Sovereign
 		public Person Spouse { get { return GameObject.GetGameObject<Person>(spouse); } }
 		public Person Owner { get { return GameObject.GetGameObject<Person>(owner); } }
 		public List<Person> Parents { get { return ListAsListOfPeople(parents); } }
-		public List<Person> Siblings { get { return ListAsListOfPeople(parents); } }
-		public List<Person> Children { get { return ListAsListOfPeople(parents); } }
-		public List<Person> Slaves { get { return ListAsListOfPeople(parents); } }
+		public List<Person> Siblings { get { return ListAsListOfPeople(siblings); } }
+		public List<Person> Children { get { return ListAsListOfPeople(children); } }
+		public List<Person> Slaves { get { return ListAsListOfPeople(slaves); } }
 
 		public Family(Person root)
 		{
@@ -148,6 +148,21 @@ namespace Sovereign
 			return owner != 0;
 		}
 
+		private bool HasParents()
+		{
+			return parents.Count > 0;
+		}
+
+		private bool HasSlaves()
+		{
+			return slaves.Count > 0;
+		}
+
+		private bool HasSiblings()
+		{
+			return siblings.Count > 0;
+		}
+
 		public Person GetHeir()
 		{
 			Person heir = null;
@@ -222,6 +237,12 @@ namespace Sovereign
 
 			owner.Family.AddSlave(slave);
 			slave.Family.AddOwner(owner);
+
+			if (!(slave.Class is Slave))
+			{
+				slave.Class = new Slave();
+				Messenger.PostMessageToPlayer(slave.Village.OwnerPlayer, slave.DisplayName + " has been enslaved and is now owned by " + owner.DisplayName + "!");
+			}
 		}
 
 		public static void FreeSlave(Person owner, Person slave)
@@ -230,6 +251,9 @@ namespace Sovereign
 			{
 				owner.Family.RemoveSlave(slave);
 				slave.Family.RemoveOwner();
+
+				slave.Class = new Farmer();
+				Messenger.PostMessageToPlayer(slave.Village.OwnerPlayer, slave.DisplayName + " has been become a free person!");
 			}
 		}
 
@@ -269,5 +293,51 @@ namespace Sovereign
 				f.Owner.Family.slaves.Remove(person.Uid);
 			}
 		}
+
+		public string GetDebugString()
+		{
+			string output = "Family of: " + RootPerson.GetDebugString();
+			output += (HasSpouse() ? "\n  Spouse: " + Spouse.GetDebugString() : "");
+			output += (HasOwner() ? "\n  Owner: " + Owner.GetDebugString() : "");
+
+			if (HasParents())
+			{
+				output += "\n  Parents:";
+				foreach (Person parent in Parents)
+				{
+					output += "\n   - " + parent.GetDebugString();
+				}
+			}
+
+			if (HasChildren())
+			{
+				output += "\n  Children:";
+				foreach (Person child in Children)
+				{
+					output += "\n   - " + child.GetDebugString();
+				}
+			}
+
+			if (HasSiblings())
+			{
+				output += "\n  Siblings:";
+				foreach (Person sibling in Siblings)
+				{
+					output += "\n   - " + sibling.GetDebugString();
+				}
+			}
+
+			if (HasSlaves())
+			{
+				output += "\n  Slaves:";
+				foreach (Person slave in Slaves)
+				{
+					output += "\n   - " + slave.GetDebugString();
+				}
+			}
+
+			return output; 
+		}
+
 	}
 }
