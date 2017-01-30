@@ -1,12 +1,14 @@
+using System;
 using System.Linq;
 using System.Collections.Generic;
 
 namespace Sovereign
 {
-	// TODO: Allow polygamy?????
-	public sealed class Family
+	public sealed class Family : PersonComponent, ILifeCycleHandler
 	{
-		private readonly uint rootPerson;
+		private const float BaseMarriageChance = 0.25f;
+		private static readonly Random rand = new Random();
+
 		private uint spouse;
 		private uint owner;
 		private readonly List<uint> parents = new List<uint>();
@@ -14,7 +16,7 @@ namespace Sovereign
 		private readonly List<uint> children = new List<uint>();
 		private readonly List<uint> slaves = new List<uint>();
 
-		public Person RootPerson { get { return GameObject.GetGameObject<Person>(rootPerson); } }
+		public Person RootPerson { get { return person; } }
 		public Person Spouse { get { return GameObject.GetGameObject<Person>(spouse); } }
 		public Person Owner { get { return GameObject.GetGameObject<Person>(owner); } }
 		public List<Person> Parents { get { return ListAsListOfPeople(parents); } }
@@ -22,9 +24,10 @@ namespace Sovereign
 		public List<Person> Children { get { return ListAsListOfPeople(children); } }
 		public List<Person> Slaves { get { return ListAsListOfPeople(slaves); } }
 
-		public Family(Person root)
+		public event Action<Person, Person> OnMarried = delegate {};
+
+		public Family(Person person) : base(person)
 		{
-			rootPerson = root.Uid;
 		}
 
 		private void AddPersonToList(List<uint> list, Person person)
@@ -253,7 +256,7 @@ namespace Sovereign
 				slave.Family.RemoveOwner();
 
 				slave.Class = new Farmer();
-				Messenger.PostMessageToPlayer(slave.Village.OwnerPlayer, slave.DisplayName + " has been become a free person!");
+				Messenger.PostMessageToPlayer(slave.Village.OwnerPlayer, slave.DisplayName + " has become a free person!");
 			}
 		}
 
@@ -339,5 +342,74 @@ namespace Sovereign
 			return output; 
 		}
 
+		public void BeBorn()
+		{
+		}
+
+		public void AgeOneSeason()
+		{
+			if (person.IsDead)
+			{
+				return;
+			}
+
+			CheckForMarriage();
+		}
+
+		public void Die()
+		{
+			HandleDeath(person);
+		}
+
+		public bool CanMarry(Person newSpouse)
+		{
+			return !HasSpouse() && !newSpouse.Family.HasSpouse();
+		}
+
+		public void Marry(Person newSpouse)
+		{
+			if (CanMarry(newSpouse))
+			{
+				person.BecomeFreePerson();
+				newSpouse.BecomeFreePerson();
+				AddSpouse(newSpouse);
+				newSpouse.Family.AddSpouse(person);
+
+				OnMarried(person, newSpouse);
+				Messenger.PostMessageToPlayer(person.Village.OwnerPlayer, person.DisplayName + " and " + newSpouse.DisplayName + " were married!");
+			}
+		}
+
+		public void CheckForMarriage()
+		{
+			if (!HasSpouse())
+			{
+				Person potentialSpouse = GetPotentialMate();
+				if (potentialSpouse != null)
+				{
+					const float marriageChance = BaseMarriageChance;
+					bool getMarried = rand.NextDouble() < marriageChance;
+					if (getMarried)
+					{
+						Marry(potentialSpouse);
+					}
+				}
+			}
+		}
+
+		public Person GetPotentialMate()
+		{
+			if (HasSpouse())
+			{
+				return Spouse;
+			}
+
+			List<Person> potentialMates = person.Village.Population.Where(p => !p.IsDead && !p.IsChild && !p.IsSlave && Math.Abs(p.Age - person.Age) < 5 && p.Sex != person.Sex && !p.Family.IsRelated(person) && !p.Family.HasSpouse()).ToList();
+			if (potentialMates.Count == 0)
+			{
+				return null;
+			}
+			return potentialMates[rand.Next(0, potentialMates.Count)];
+		}
 	}
 }

@@ -41,8 +41,7 @@ namespace Sovereign
 			AddPerson(Person.GenerateStartingChief(this));
 			for (int i = 0; i < StartingPopulation; ++i)
 			{
-				Person person = Person.GenerateStartingPerson(this);
-				person.Sex = i % 2 == 0 ? Sex.Male : Sex.Female;
+				Person person = Person.GenerateStartingPerson(this, i % 2 == 0 ? Sex.Male : Sex.Female);
 				AddPerson(person);
 			}
 
@@ -205,8 +204,8 @@ namespace Sovereign
 
 		private void BuryDead()
 		{
-			var theDead = population.Where(person => person.Dead).ToList();
-			population.RemoveAll(person => person.Dead);
+			var theDead = population.Where(person => person.IsDead).ToList();
+			population.RemoveAll(person => person.IsDead);
 			graveyard.AddRange(theDead);
 		}
 
@@ -221,7 +220,7 @@ namespace Sovereign
 				}
 				else if (newChief.Family.IsSpouse(oldChief))
 				{
-					Messenger.PostMessageToPlayer(OwnerPlayer, oldChief.DisplayName + "'s " + Person.GetSpouseTypeName(newChief) + " " + newChief.DisplayName + " has become chief!");
+					Messenger.PostMessageToPlayer(OwnerPlayer, oldChief.DisplayName + "'s " + Names.GetSpouseType(newChief) + " " + newChief.DisplayName + " has become chief!");
 				}
 				else if (newChief.Family.IsSibling(oldChief))
 				{
@@ -315,7 +314,7 @@ namespace Sovereign
 
 		public Person GetChief()
 		{
-			return population.Find(p => p.IsChief && !p.Dead);
+			return population.Find(p => p.IsChief && !p.IsDead);
 		}
 	}
 }
